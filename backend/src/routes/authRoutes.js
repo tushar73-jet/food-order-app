@@ -5,8 +5,6 @@ import prisma from "../lib/prisma.js";
 
 const router = express.Router();
 
-// --- Register a new user ---
-// POST /api/auth/register
 router.post("/register", async (req, res) => {
   const { email, password, name } = req.body;
 
@@ -35,8 +33,6 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// --- Log in a user ---
-// POST /api/auth/login
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
@@ -51,7 +47,6 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    // Create and sign a JWT token
     const token = jwt.sign(
       { userId: user.id, email: user.email },
       process.env.JWT_SECRET,

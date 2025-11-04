@@ -5,9 +5,8 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Seeding database with Indian restaurants...");
+  console.log("Seeding database...");
 
-  // Create demo user
   const passwordHash = await bcrypt.hash("password123", 10);
   const user = await prisma.user.upsert({
     where: { email: "demo@example.com" },
@@ -19,14 +18,12 @@ async function main() {
     },
   });
 
-  // Clear existing data
   await prisma.orderItem.deleteMany({});
   await prisma.order.deleteMany({});
   await prisma.product.deleteMany({});
   await prisma.restaurant.deleteMany({});
 
-  // Create Indian restaurants with popular food
-  const restaurants = await prisma.restaurant.createMany({
+  await prisma.restaurant.createMany({
     data: [
       {
         name: "Biryani Blues",
@@ -76,12 +73,9 @@ async function main() {
     ],
   });
 
-  // Get restaurant IDs
   const allRestaurants = await prisma.restaurant.findMany();
 
-  // Create products for each restaurant
   const products = [
-    // Biryani Blues
     {
       restaurantId: allRestaurants[0].id,
       data: [
@@ -115,7 +109,6 @@ async function main() {
         },
       ],
     },
-    // Dosa Express
     {
       restaurantId: allRestaurants[1].id,
       data: [
@@ -149,7 +142,6 @@ async function main() {
         },
       ],
     },
-    // Butter Chicken House
     {
       restaurantId: allRestaurants[2].id,
       data: [
@@ -183,7 +175,6 @@ async function main() {
         },
       ],
     },
-    // Pav Bhaji Corner
     {
       restaurantId: allRestaurants[3].id,
       data: [
@@ -217,7 +208,6 @@ async function main() {
         },
       ],
     },
-    // Thali Special
     {
       restaurantId: allRestaurants[4].id,
       data: [
@@ -255,10 +245,7 @@ async function main() {
     });
   }
 
-  console.log("✅ Database seeded successfully!");
-  console.log(`   - Created ${allRestaurants.length} restaurants`);
-  console.log(`   - Created products for each restaurant`);
-  console.log(`   - Demo user: demo@example.com / password123`);
+  console.log("Database seeded successfully!");
 }
 
 main()

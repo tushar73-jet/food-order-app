@@ -3,7 +3,6 @@ import prisma from "../lib/prisma.js";
 
 const router = express.Router();
 
-// GET all restaurants
 router.get("/", async (req, res) => {
   try {
     const restaurants = await prisma.restaurant.findMany({
@@ -13,19 +12,13 @@ router.get("/", async (req, res) => {
         },
       },
     });
-    console.log(`✅ Found ${restaurants.length} restaurants`);
     res.json(restaurants);
   } catch (error) {
-    console.error("❌ Error fetching restaurants:", error);
-    console.error("Error details:", error.message);
-    res.status(500).json({ 
-      error: "Server error fetching restaurants",
-      details: error.message 
-    });
+    console.error("Error fetching restaurants:", error);
+    res.status(500).json({ error: "Server error fetching restaurants" });
   }
 });
 
-// GET restaurant by ID with products
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
   try {
@@ -47,4 +40,3 @@ router.get("/:id", async (req, res) => {
 });
 
 export default router;
-
