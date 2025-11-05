@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3001;
 // Update CORS to allow your new frontend domain
 app.use(cors({
   origin: [
-    "https://food-order-app-ten-sigma.vercel.app/"  
+    "https://food-order-app-ten-sigma.vercel.app"  
   ],
   credentials: true
 }));
