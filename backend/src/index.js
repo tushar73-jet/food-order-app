@@ -11,9 +11,14 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Update CORS to allow your new frontend domain
 app.use(cors({
-  origin: "https://food-order-ntljsvjlc-tushar73-jets-projects.vercel.app"
+  origin: [
+    "https://your-new-vercel-domain.vercel.app"  
+  ],
+  credentials: true
 }));
+
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
