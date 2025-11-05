@@ -2,7 +2,7 @@
     "rewrites": [
       {
         "source": "/api/:path*",
-        "destination": "https_//food-order-app-1-tkp5.onrender.com/api/:path*"
+        "destination": "https://food-order-app-1-tkp5.onrender.com/api/:path*"
       }
     ]
   }
