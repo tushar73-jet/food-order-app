@@ -12,7 +12,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors({
-  origin: "https://food-order-app-beta-two.vercel.app"
+  origin: "https://food-order-ntljsvjlc-tushar73-jets-projects.vercel.app"
 }));
 app.use(express.json());
 
