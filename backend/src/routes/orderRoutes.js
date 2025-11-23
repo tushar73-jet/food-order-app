@@ -6,21 +6,13 @@ import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Initialize Razorpay with error handling
 let razorpay;
-try {
-  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-    console.warn("⚠️  Razorpay keys not found. Payment features will not work.");
-  } else {
-    razorpay = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID,
-      key_secret: process.env.RAZORPAY_KEY_SECRET,
-    });
-  }
-} catch (error) {
-  console.error("Failed to initialize Razorpay:", error);
+if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+  razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
 }
-
 
 router.post("/create-order", protect, async (req, res) => {
   if (!razorpay) {
@@ -54,8 +46,7 @@ router.post("/create-order", protect, async (req, res) => {
       keyId: process.env.RAZORPAY_KEY_ID,
     });
   } catch (error) {
-    console.error("Razorpay order creation failed:", error);
-    res.status(500).json({ error: "Failed to create payment order: " + error.message });
+    res.status(500).json({ error: "Failed to create payment order" });
   }
 });
 
@@ -117,45 +108,7 @@ router.post("/verify-payment", protect, async (req, res) => {
 
     res.status(201).json(newOrder);
   } catch (error) {
-    console.error("Payment verification and order creation failed:", error);
-    res.status(500).json({ error: "Failed to verify payment and create order: " + error.message });
-  }
-});
-
-router.post("/", protect, async (req, res) => {
-  const userId = req.userId;
-  const { items, totalPrice } = req.body;
-
-  if (!items || items.length === 0) {
-    return res.status(400).json({ error: "No items in cart" });
-  }
-
-  try {
-    const newOrder = await prisma.$transaction(async (tx) => {
-      const order = await tx.order.create({
-        data: {
-          userId,
-          totalPrice: parseFloat(totalPrice),
-        },
-      });
-
-      const orderItemsData = items.map((item) => ({
-        orderId: order.id,
-        productId: item.productId,
-        quantity: item.quantity,
-      }));
-
-      await tx.orderItem.createMany({
-        data: orderItemsData,
-      });
-
-      return order;
-    });
-
-    res.status(201).json(newOrder);
-  } catch (error) {
-    console.error("Order creation failed:", error);
-    res.status(500).json({ error: "Failed to create order" });
+    res.status(500).json({ error: "Failed to verify payment and create order" });
   }
 });
 
@@ -179,7 +132,6 @@ router.get("/my-orders", protect, async (req, res) => {
 
     res.json(orders);
   } catch (error) {
-    console.error("Failed to fetch user orders:", error);
     res.status(500).json({ error: "Failed to load orders" });
   }
 });
@@ -206,7 +158,6 @@ router.get("/:id", protect, async (req, res) => {
 
     res.json(order);
   } catch (error) {
-    console.error("Failed to fetch order:", error);
     res.status(500).json({ error: "Failed to load order" });
   }
 });
@@ -227,11 +178,8 @@ router.put("/:id/status", async (req, res) => {
 
     req.io.to(`order_${id}`).emit("order_status_updated", { status });
 
-    console.log("Socket emitted status:", status);
-
     res.json(updatedOrder);
   } catch (error) {
-    console.error("Order status update failed:", error);
     res.status(500).json({ error: "Failed to update status" });
   }
 });

@@ -19,7 +19,6 @@ export const protect = (req, res, next) => {
     req.userId = decoded.userId;
     next();
   } catch (error) {
-    console.error(error);
     res.status(401).json({ error: "Not authorized, token failed" });
   }
 };

@@ -25,7 +25,6 @@ export default function OrderTrackingPage() {
         setStatus(data.status);
         setLoading(false);
       } catch (error) {
-        console.error("Failed to fetch order:", error);
         if (error.response?.status === 401) {
           setErrorMsg("Please login to view this order.");
         } else if (error.response?.status === 404) {
@@ -49,7 +48,6 @@ export default function OrderTrackingPage() {
     }
 
     const handler = (data) => {
-      console.log("Realtime update:", data.status);
       setStatus(data.status);
     };
 

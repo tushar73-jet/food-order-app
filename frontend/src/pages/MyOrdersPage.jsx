@@ -21,7 +21,6 @@ export default function MyOrdersPage() {
         setOrders(data);
         setLoading(false);
       } catch (error) {
-        console.error("Failed to fetch orders:", error);
         if (error.response?.status === 401) {
           navigate("/login");
         } else {

@@ -27,7 +27,6 @@ const CartPage = () => {
       const { data } = await createRazorpayOrder(getTotalPrice());
       setRazorpayOrder(data);
     } catch (error) {
-      console.error("Failed to create Razorpay order", error);
       const errorMessage = error.response?.data?.error || error.message || "Unknown error";
       
       if (errorMessage.includes("not configured") || errorMessage.includes("RAZORPAY")) {
@@ -63,7 +62,6 @@ const CartPage = () => {
       setRazorpayOrder(null);
       navigate(`/track/${data.id}`);
     } catch (error) {
-      console.error("Failed to verify payment and create order", error);
       setPaymentError("Payment succeeded but order creation failed. Please contact support.");
       setLoading(false);
       setRazorpayOrder(null);

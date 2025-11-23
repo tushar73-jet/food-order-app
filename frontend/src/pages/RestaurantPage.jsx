@@ -18,7 +18,6 @@ const RestaurantPage = () => {
         setRestaurant(data);
       } catch (error) {
         setError("Restaurant not found");
-        console.error(error);
       } finally {
         setLoading(false);
       }

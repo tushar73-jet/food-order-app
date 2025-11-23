@@ -16,7 +16,6 @@ const RestaurantsPage = () => {
         setRestaurants(data);
       } catch (error) {
         setError("Failed to load restaurants");
-        console.error(error);
       } finally {
         setLoading(false);
       }

@@ -53,7 +53,6 @@ export default function RazorpayCheckout({ orderId, amount, currency, keyId, onS
         const razorpay = new window.Razorpay(options);
         razorpay.open();
       } catch (error) {
-        console.error("Razorpay error:", error);
         if (onError) onError(error.message || "Payment initialization failed");
       }
     };

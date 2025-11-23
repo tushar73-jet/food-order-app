@@ -14,10 +14,9 @@ const PORT = process.env.PORT || 3001;
 
 const allowedOrigins = [
   "https://food-order-app-ten-sigma.vercel.app",
-  "http://localhost:5173", 
-  "http://localhost:3000",   
+  "http://localhost:5173",
+  "http://localhost:3000",
 ];
-
 
 app.use(
   cors({
@@ -28,7 +27,6 @@ app.use(
 
 app.use(express.json());
 
-
 const server = http.createServer(app);
 
 const io = new Server(server, {
@@ -37,20 +35,12 @@ const io = new Server(server, {
     methods: ["GET", "POST", "PUT"],
     credentials: true,
   },
-  transports: ["websocket", "polling"], 
+  transports: ["websocket", "polling"],
 });
 
-
 io.on("connection", (socket) => {
-  console.log("Client connected:", socket.id);
-
   socket.on("join_order_room", (orderId) => {
     socket.join(`order_${orderId}`);
-    console.log(`Client joined room: order_${orderId}`);
-  });
-
-  socket.on("disconnect", () => {
-    console.log("Client disconnected:", socket.id);
   });
 });
 
@@ -59,12 +49,8 @@ app.use((req, res, next) => {
   next();
 });
 
-
 app.use("/api/auth", authRoutes);
 app.use("/api/restaurants", restaurantRoutes);
 app.use("/api/orders", orderRoutes);
 
-
-server.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-});
+server.listen(PORT);
