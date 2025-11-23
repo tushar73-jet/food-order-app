@@ -1,75 +1,104 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { io } from "socket.io-client";
+import socket from "../utils/socket";
 import { fetchOrderById } from "../services/api";
 
-const SOCKET_URL = import.meta.env.VITE_API_URL.replace('/api', '');
-const socket = io(SOCKET_URL);
-const OrderTrackingPage = () => {
+export default function OrderTrackingPage() {
   const { id } = useParams();
   const [order, setOrder] = useState(null);
   const [status, setStatus] = useState("");
-  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
-    const loadOrder = async () => {
+    async function loadOrder() {
       try {
         const { data } = await fetchOrderById(id);
+
         setOrder(data);
         setStatus(data.status);
+        setLoading(false);
       } catch (error) {
-        console.error("Failed to load order");
-        setError(true);
+        console.error("Failed to fetch order:", error);
+        setErrorMsg("Failed to load order. Please try again.");
+        setLoading(false);
       }
-    };
-
-    if (id) {
-      loadOrder();
-      socket.emit("join_order_room", id);
     }
 
-
-    socket.on("order_status_updated", (data) => {
+    loadOrder();
+    socket.emit("join_order_room", id);
+    const handler = (data) => {
+      console.log("Realtime update:", data.status);
       setStatus(data.status);
-      console.log("Status updated:", data.status);
-    });
+    };
+
+    socket.on("order_status_updated", handler);
 
     return () => {
-      socket.off("order_status_updated");
+      socket.off("order_status_updated", handler);
     };
   }, [id]);
 
+  if (loading) {
+    return (
+      <div style={{ padding: 40 }}>
+        <h2>Loading order...</h2>
+      </div>
+    );
+  }
 
-  if (error) return <div className="p-8 text-center text-red-500">Failed to load order. It may not exist.</div>;
-  if (!order) return <div className="p-8 text-center">Loading order...</div>;
+  if (errorMsg) {
+    return (
+      <div style={{ padding: 40 }}>
+        <h2>{errorMsg}</h2>
+      </div>
+    );
+  }
+
+  if (!order) {
+    return (
+      <div style={{ padding: 40 }}>
+        <h2>No order found.</h2>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Track Order #{order.id}</h1>
-      
-      <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <span className="text-gray-600">Status:</span>
-          <span className={`px-4 py-2 rounded-full text-white font-bold ${
-            status === 'DELIVERED' ? 'bg-green-500' : 'bg-blue-500'
-          }`}>
-            {status}
-          </span>
-        </div>
-        <p className="text-xl font-semibold">Total: ${order.totalPrice}</p>
+    <div style={{ padding: "40px" }}>
+      <h1>Tracking Order #{id}</h1>
+
+      <div
+        style={{
+          marginTop: "20px",
+          padding: "16px",
+          background: "#f7f7f7",
+          borderRadius: "10px",
+          width: "fit-content",
+        }}
+      >
+        <h2>Status: {status}</h2>
       </div>
 
-      <div className="space-y-4">
-        <h3 className="font-bold text-lg">Order Items:</h3>
-        {order.items.map((item) => (
-          <div key={item.id} className="flex justify-between border-b py-2">
-            <span>{item.product.name} x {item.quantity}</span>
-            <span>${(item.product.price * item.quantity).toFixed(2)}</span>
+      <h3 style={{ marginTop: "30px" }}>Items:</h3>
+
+      {order.items?.length > 0 ? (
+        order.items.map((item) => (
+          <div
+            key={item.id}
+            style={{
+              padding: "10px",
+              background: "#eee",
+              marginBottom: "10px",
+              borderRadius: "8px",
+              width: "fit-content",
+            }}
+          >
+            {item.product?.name || "Unknown Product"} × {item.quantity}
           </div>
-        ))}
-      </div>
+        ))
+      ) : (
+        <p>No items found.</p>
+      )}
     </div>
   );
-};
-
-export default OrderTrackingPage;
+}

@@ -3,6 +3,8 @@ import prisma from "../lib/prisma.js";
 import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
+
+
 router.post("/", protect, async (req, res) => {
   const userId = req.userId;
   const { items, totalPrice } = req.body;
@@ -39,6 +41,35 @@ router.post("/", protect, async (req, res) => {
     res.status(500).json({ error: "Failed to create order" });
   }
 });
+
+
+router.get("/:id", protect, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: Number(id) },
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
+        user: true,
+      },
+    });
+
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    res.json(order);
+  } catch (error) {
+    console.error("Failed to fetch order:", error);
+    res.status(500).json({ error: "Failed to load order" });
+  }
+});
+
 router.put("/:id/status", async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
@@ -53,16 +84,14 @@ router.put("/:id/status", async (req, res) => {
       data: { status },
     });
 
-    req.io.to(`order_${id}`).emit("order_status_updated", {
-      status,
-    });
+    req.io.to(`order_${id}`).emit("order_status_updated", { status });
 
     console.log("Socket emitted status:", status);
 
     res.json(updatedOrder);
   } catch (error) {
     console.error("Order status update failed:", error);
-    res.status(500).json({ error: "Failed to update order status" });
+    res.status(500).json({ error: "Failed to update status" });
   }
 });
 
