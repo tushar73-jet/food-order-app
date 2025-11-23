@@ -3,7 +3,6 @@ import prisma from "../lib/prisma.js";
 import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
-
 router.post("/", protect, async (req, res) => {
   const userId = req.userId;
   const { items, totalPrice } = req.body;
@@ -38,6 +37,32 @@ router.post("/", protect, async (req, res) => {
   } catch (error) {
     console.error("Order creation failed:", error);
     res.status(500).json({ error: "Failed to create order" });
+  }
+});
+router.put("/:id/status", async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  if (!status) {
+    return res.status(400).json({ error: "Status is required" });
+  }
+
+  try {
+    const updatedOrder = await prisma.order.update({
+      where: { id: Number(id) },
+      data: { status },
+    });
+
+    req.io.to(`order_${id}`).emit("order_status_updated", {
+      status,
+    });
+
+    console.log("Socket emitted status:", status);
+
+    res.json(updatedOrder);
+  } catch (error) {
+    console.error("Order status update failed:", error);
+    res.status(500).json({ error: "Failed to update order status" });
   }
 });
 
