@@ -1,20 +1,15 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { loadStripe } from "@stripe/stripe-js";
-import { Elements } from "@stripe/react-stripe-js";
 import { useCart } from "../context/CartContext";
-import { createPaymentIntent, confirmPayment } from "../services/api";
-import PaymentForm from "../components/PaymentForm";
-
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+import { createRazorpayOrder, verifyPayment } from "../services/api";
+import RazorpayCheckout from "../components/RazorpayCheckout";
 
 const CartPage = () => {
   const { cartItems, removeFromCart, getTotalPrice, clearCart } = useCart();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [showPayment, setShowPayment] = useState(false);
-  const [clientSecret, setClientSecret] = useState("");
   const [paymentError, setPaymentError] = useState(null);
+  const [razorpayOrder, setRazorpayOrder] = useState(null);
   const token = localStorage.getItem("token");
 
   const handleCheckout = async () => {
@@ -29,27 +24,35 @@ const CartPage = () => {
     setPaymentError(null);
 
     try {
-      const { data } = await createPaymentIntent(getTotalPrice());
-      setClientSecret(data.clientSecret);
-      setShowPayment(true);
+      const { data } = await createRazorpayOrder(getTotalPrice());
+      setRazorpayOrder(data);
     } catch (error) {
-      console.error("Failed to create payment intent", error);
-      const errorMessage = error.response?.data?.error || error.message;
-      if (errorMessage.includes("not configured") || errorMessage.includes("STRIPE_SECRET_KEY")) {
-        setPaymentError("Payment service is not configured. Please contact administrator or check SETUP_PAYMENT.md");
+      console.error("Failed to create Razorpay order", error);
+      const errorMessage = error.response?.data?.error || error.message || "Unknown error";
+      
+      if (errorMessage.includes("not configured") || errorMessage.includes("RAZORPAY")) {
+        setPaymentError("⚠️ Payment service is not configured on the server. Please contact the administrator to add Razorpay API keys to the backend environment variables.");
+      } else if (error.response?.status === 503) {
+        setPaymentError("⚠️ Payment service unavailable. The server needs Razorpay API keys configured. Please contact support.");
+      } else if (error.response?.status === 401) {
+        setPaymentError("Please login to continue with payment.");
+        navigate("/login");
+      } else if (error.response?.status >= 500) {
+        setPaymentError("Server error. Please try again later or contact support.");
       } else {
-        setPaymentError(errorMessage || "Failed to initialize payment. Please try again.");
+        setPaymentError(`Payment initialization failed: ${errorMessage}`);
       }
-    } finally {
       setLoading(false);
     }
   };
 
-  const handlePaymentSuccess = async (paymentIntent) => {
+  const handlePaymentSuccess = async (response) => {
     setLoading(true);
     try {
-      const { data } = await confirmPayment({
-        paymentIntentId: paymentIntent.id,
+      const { data } = await verifyPayment({
+        razorpay_order_id: response.razorpay_order_id,
+        razorpay_payment_id: response.razorpay_payment_id,
+        razorpay_signature: response.razorpay_signature,
         items: cartItems.map((item) => ({
           productId: item.id,
           quantity: item.quantity,
@@ -57,16 +60,20 @@ const CartPage = () => {
         totalPrice: getTotalPrice(),
       });
       clearCart();
+      setRazorpayOrder(null);
       navigate(`/track/${data.id}`);
     } catch (error) {
-      console.error("Failed to confirm payment and create order", error);
+      console.error("Failed to verify payment and create order", error);
       setPaymentError("Payment succeeded but order creation failed. Please contact support.");
       setLoading(false);
+      setRazorpayOrder(null);
     }
   };
 
   const handlePaymentError = (error) => {
-    setPaymentError(error);
+    setPaymentError(error || "Payment failed. Please try again.");
+    setLoading(false);
+    setRazorpayOrder(null);
   };
 
   if (cartItems.length === 0) {
@@ -95,10 +102,10 @@ const CartPage = () => {
               />
               <div className="cart-item__info">
                 <h4>{item.name}</h4>
-                <p>${Number(item.price)} × {item.quantity}</p>
+                <p>₹{Number(item.price)} × {item.quantity}</p>
               </div>
               <div className="cart-item__price">
-                ${(Number(item.price) * item.quantity).toFixed(2)}
+                ₹{(Number(item.price) * item.quantity).toFixed(2)}
               </div>
               <button
                 onClick={() => removeFromCart(item.id)}
@@ -113,83 +120,35 @@ const CartPage = () => {
         <div className="cart__summary">
           <div className="cart-summary__total">
             <span>Total:</span>
-            <span className="total-price">${getTotalPrice()}</span>
+            <span className="total-price">₹{getTotalPrice()}</span>
           </div>
           {!token && (
             <p className="cart-summary__note">
               Please <Link to="/login">login</Link> to checkout
             </p>
           )}
-          {!showPayment ? (
-            <button
-              onClick={handleCheckout}
-              disabled={!token || loading}
-              className="btn btn-primary btn-large btn-full"
-            >
-              {loading ? "Processing..." : "Proceed to Payment"}
-            </button>
-          ) : (
-            <div className="payment-section">
-              <div style={{ marginBottom: "1rem" }}>
-                <h3 style={{ fontSize: "1.1rem", fontWeight: 600, marginBottom: "0.5rem" }}>
-                  Secure Checkout
-                </h3>
-                <p style={{ fontSize: "0.9rem", color: "var(--gray)", margin: 0 }}>
-                  Your payment information is secure and encrypted
-                </p>
-              </div>
-              {paymentError && (
-                <div className="alert alert-error" style={{ marginBottom: "16px" }}>
-                  {paymentError}
-                </div>
-              )}
-              {loading && !clientSecret && (
-                <div style={{ textAlign: "center", padding: "2rem" }}>
-                  <div className="spinner" style={{ margin: "0 auto 1rem" }}></div>
-                  <p>Initializing payment...</p>
-                </div>
-              )}
-              {clientSecret && (
-                <Elements
-                  stripe={stripePromise}
-                  options={{
-                    clientSecret,
-                    appearance: {
-                      theme: "stripe",
-                      variables: {
-                        colorPrimary: "#6366f1",
-                        colorBackground: "#ffffff",
-                        colorText: "#1f2937",
-                        colorDanger: "#ef4444",
-                        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif",
-                        spacingUnit: "4px",
-                        borderRadius: "8px",
-                      },
-                    },
-                  }}
-                >
-                  <PaymentForm
-                    amount={getTotalPrice()}
-                    clientSecret={clientSecret}
-                    onSuccess={handlePaymentSuccess}
-                    onError={handlePaymentError}
-                  />
-                </Elements>
-              )}
-              <button
-                onClick={() => {
-                  setShowPayment(false);
-                  setClientSecret("");
-                  setPaymentError(null);
-                }}
-                className="btn btn-outline btn-full"
-                style={{ marginTop: "12px" }}
-                disabled={loading}
-              >
-                Cancel Payment
-              </button>
+          {paymentError && (
+            <div className="alert alert-error" style={{ marginBottom: "16px", marginTop: "1rem" }}>
+              {paymentError}
             </div>
           )}
+          {razorpayOrder && (
+            <RazorpayCheckout
+              orderId={razorpayOrder.id}
+              amount={razorpayOrder.amount}
+              currency={razorpayOrder.currency}
+              keyId={razorpayOrder.keyId}
+              onSuccess={handlePaymentSuccess}
+              onError={handlePaymentError}
+            />
+          )}
+          <button
+            onClick={handleCheckout}
+            disabled={!token || loading || razorpayOrder}
+            className="btn btn-primary btn-large btn-full"
+          >
+            {loading ? "Processing..." : razorpayOrder ? "Opening Payment..." : "Proceed to Payment"}
+          </button>
         </div>
       </div>
     </div>

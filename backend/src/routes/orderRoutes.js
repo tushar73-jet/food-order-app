@@ -1,27 +1,31 @@
 import express from "express";
-import Stripe from "stripe";
+import Razorpay from "razorpay";
+import crypto from "crypto";
 import prisma from "../lib/prisma.js";
 import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Initialize Stripe with error handling
-let stripe;
+// Initialize Razorpay with error handling
+let razorpay;
 try {
-  if (!process.env.STRIPE_SECRET_KEY) {
-    console.warn("⚠️  STRIPE_SECRET_KEY not found. Payment features will not work.");
+  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+    console.warn("⚠️  Razorpay keys not found. Payment features will not work.");
   } else {
-    stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
   }
 } catch (error) {
-  console.error("Failed to initialize Stripe:", error);
+  console.error("Failed to initialize Razorpay:", error);
 }
 
 
-router.post("/create-payment-intent", protect, async (req, res) => {
-  if (!stripe) {
+router.post("/create-order", protect, async (req, res) => {
+  if (!razorpay) {
     return res.status(503).json({ 
-      error: "Payment service not configured. Please set STRIPE_SECRET_KEY in environment variables." 
+      error: "Payment service not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in environment variables." 
     });
   }
 
@@ -32,42 +36,58 @@ router.post("/create-payment-intent", protect, async (req, res) => {
   }
 
   try {
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(parseFloat(amount) * 100), // Convert to cents
-      currency: "usd",
-      metadata: {
+    const options = {
+      amount: Math.round(parseFloat(amount) * 100), // Convert to paise (Razorpay uses smallest currency unit)
+      currency: "INR",
+      receipt: `receipt_${Date.now()}`,
+      notes: {
         userId: req.userId.toString(),
       },
-    });
+    };
+
+    const razorpayOrder = await razorpay.orders.create(options);
 
     res.json({
-      clientSecret: paymentIntent.client_secret,
-      paymentIntentId: paymentIntent.id,
+      id: razorpayOrder.id,
+      amount: razorpayOrder.amount,
+      currency: razorpayOrder.currency,
+      keyId: process.env.RAZORPAY_KEY_ID,
     });
   } catch (error) {
-    console.error("Payment intent creation failed:", error);
-    res.status(500).json({ error: "Failed to create payment intent: " + error.message });
+    console.error("Razorpay order creation failed:", error);
+    res.status(500).json({ error: "Failed to create payment order: " + error.message });
   }
 });
 
-router.post("/confirm-payment", protect, async (req, res) => {
-  if (!stripe) {
+router.post("/verify-payment", protect, async (req, res) => {
+  if (!razorpay) {
     return res.status(503).json({ 
-      error: "Payment service not configured. Please set STRIPE_SECRET_KEY in environment variables." 
+      error: "Payment service not configured." 
     });
   }
 
-  const { paymentIntentId, items, totalPrice } = req.body;
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, items, totalPrice } = req.body;
 
-  if (!paymentIntentId || !items || items.length === 0) {
+  if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !items || items.length === 0) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
   try {
-    // Verify payment intent
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    // Verify payment signature
+    const text = `${razorpay_order_id}|${razorpay_payment_id}`;
+    const generated_signature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(text)
+      .digest("hex");
 
-    if (paymentIntent.status !== "succeeded") {
+    if (generated_signature !== razorpay_signature) {
+      return res.status(400).json({ error: "Invalid payment signature" });
+    }
+
+    // Verify payment with Razorpay
+    const payment = await razorpay.payments.fetch(razorpay_payment_id);
+
+    if (payment.status !== "captured" && payment.status !== "authorized") {
       return res.status(400).json({ error: "Payment not completed" });
     }
 
@@ -77,7 +97,7 @@ router.post("/confirm-payment", protect, async (req, res) => {
         data: {
           userId: req.userId,
           totalPrice: parseFloat(totalPrice),
-          paymentId: paymentIntentId,
+          paymentId: razorpay_payment_id,
           paymentStatus: "PAID",
         },
       });
@@ -97,8 +117,8 @@ router.post("/confirm-payment", protect, async (req, res) => {
 
     res.status(201).json(newOrder);
   } catch (error) {
-    console.error("Order creation with payment failed:", error);
-    res.status(500).json({ error: "Failed to create order" });
+    console.error("Payment verification and order creation failed:", error);
+    res.status(500).json({ error: "Failed to verify payment and create order: " + error.message });
   }
 });
 

@@ -20,7 +20,7 @@ export const fetchRestaurantById = (id) => API.get(`/restaurants/${id}`);
 export const createOrder = (orderData) => API.post("/orders", orderData);
 export const fetchMyOrders = () => API.get("/orders/my-orders");
 export const fetchOrderById = (id) => API.get(`/orders/${id}`);
-export const createPaymentIntent = (amount) =>
-  API.post("/orders/create-payment-intent", { amount });
-export const confirmPayment = (paymentData) =>
-  API.post("/orders/confirm-payment", paymentData);
+export const createRazorpayOrder = (amount) =>
+  API.post("/orders/create-order", { amount });
+export const verifyPayment = (paymentData) =>
+  API.post("/orders/verify-payment", paymentData);
