@@ -24,9 +24,14 @@ const Header = () => {
           🛒 Cart {cartItemCount > 0 && <span className="badge">{cartItemCount}</span>}
         </Link>
         {token ? (
-          <button onClick={handleLogout} className="btn btn-outline">
-            Logout
-          </button>
+          <>
+            <Link to="/orders" className="btn btn-outline">
+              📦 My Orders
+            </Link>
+            <button onClick={handleLogout} className="btn btn-outline">
+              Logout
+            </button>
+          </>
         ) : (
           <>
             <Link to="/login" className="btn btn-outline">

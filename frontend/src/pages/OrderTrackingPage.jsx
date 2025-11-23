@@ -11,6 +11,12 @@ export default function OrderTrackingPage() {
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
+    if (!id) {
+      setErrorMsg("Invalid order ID");
+      setLoading(false);
+      return;
+    }
+
     async function loadOrder() {
       try {
         const { data } = await fetchOrderById(id);
@@ -20,13 +26,28 @@ export default function OrderTrackingPage() {
         setLoading(false);
       } catch (error) {
         console.error("Failed to fetch order:", error);
-        setErrorMsg("Failed to load order. Please try again.");
+        if (error.response?.status === 401) {
+          setErrorMsg("Please login to view this order.");
+        } else if (error.response?.status === 404) {
+          setErrorMsg("Order not found.");
+        } else {
+          setErrorMsg(error.response?.data?.error || "Failed to load order. Please try again.");
+        }
         setLoading(false);
       }
     }
 
     loadOrder();
-    socket.emit("join_order_room", id);
+
+    // Setup socket connection for real-time updates
+    if (socket.connected) {
+      socket.emit("join_order_room", id);
+    } else {
+      socket.once("connect", () => {
+        socket.emit("join_order_room", id);
+      });
+    }
+
     const handler = (data) => {
       console.log("Realtime update:", data.status);
       setStatus(data.status);

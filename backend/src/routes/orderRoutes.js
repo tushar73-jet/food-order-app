@@ -42,6 +42,30 @@ router.post("/", protect, async (req, res) => {
   }
 });
 
+router.get("/my-orders", protect, async (req, res) => {
+  const userId = req.userId;
+
+  try {
+    const orders = await prisma.order.findMany({
+      where: { userId },
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    res.json(orders);
+  } catch (error) {
+    console.error("Failed to fetch user orders:", error);
+    res.status(500).json({ error: "Failed to load orders" });
+  }
+});
 
 router.get("/:id", protect, async (req, res) => {
   const { id } = req.params;
