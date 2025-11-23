@@ -13,7 +13,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 const allowedOrigins = [
-  "https://food-order-jm9ha0pc7-tushar73-jets-projects.vercel.app", 
+  "https://food-order-app-ten-sigma.vercel.app",
   "http://localhost:5173", 
   "http://localhost:3000",   
 ];
