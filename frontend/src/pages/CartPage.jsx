@@ -19,7 +19,7 @@ const CartPage = () => {
 
     setLoading(true);
     try {
-      await createOrder({
+      const { data } = await createOrder({
         items: cartItems.map((item) => ({
           productId: item.id,
           quantity: item.quantity,
@@ -27,7 +27,7 @@ const CartPage = () => {
         totalPrice: getTotalPrice(),
       });
       clearCart();
-      navigate("/");
+      navigate(`/track/${data.id}`);
     } catch (error) {
       console.error("Failed to place order", error);
       alert("Failed to place order. Please try again.");
@@ -92,7 +92,7 @@ const CartPage = () => {
             disabled={!token || loading}
             className="btn btn-primary btn-large btn-full"
           >
-            {loading ? "Processing..." : "Proceed to Checkout"}
+            {loading ? "Processing..." : "Place Order & Track"}
           </button>
         </div>
       </div>

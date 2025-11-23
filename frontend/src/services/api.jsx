@@ -14,3 +14,6 @@ export const register = (formData) => API.post("/auth/register", formData);
 export const fetchRestaurants = () => API.get("/restaurants");
 export const fetchRestaurantById = (id) => API.get(`/restaurants/${id}`);
 export const createOrder = (orderData) => API.post("/orders", orderData);
+export const createPaymentIntent = (amount) => API.post("/orders/create-payment-intent", { amount });
+export const fetchMyOrders = () => API.get("/orders/my-orders");
+export const fetchOrderById = (id) => API.get(`/orders/${id}`);

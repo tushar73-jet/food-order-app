@@ -40,13 +40,27 @@ model Product {
   orderItems   OrderItem[]
 }
 
+enum OrderStatus {
+  PENDING
+  PREPARING
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
 model Order {
-  id         Int         @id @default(autoincrement())
-  user       User        @relation(fields: [userId], references: [id])
-  userId     Int
-  totalPrice Decimal     @db.Decimal(10, 2)
-  createdAt  DateTime    @default(now())
-  items      OrderItem[]
+  id            Int         @id @default(autoincrement())
+  user          User        @relation(fields: [userId], references: [id])
+  userId        Int
+  totalPrice    Decimal     @db.Decimal(10, 2)
+  status        OrderStatus @default(PENDING)
+  
+  paymentId     String?     
+  paymentStatus String      @default("UNPAID")
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  items         OrderItem[]
 }
 
 model OrderItem {
