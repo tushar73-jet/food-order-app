@@ -3,12 +3,13 @@ import { useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 import { fetchOrderById } from "../services/api";
 
-const socket = io(import.meta.env.VITE_API_URL);
-
+const SOCKET_URL = import.meta.env.VITE_API_URL.replace('/api', '');
+const socket = io(SOCKET_URL);
 const OrderTrackingPage = () => {
   const { id } = useParams();
   const [order, setOrder] = useState(null);
   const [status, setStatus] = useState("");
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     const loadOrder = async () => {
@@ -18,15 +19,19 @@ const OrderTrackingPage = () => {
         setStatus(data.status);
       } catch (error) {
         console.error("Failed to load order");
+        setError(true);
       }
     };
-    loadOrder();
 
-    socket.emit("join_order_room", id);
+    if (id) {
+      loadOrder();
+      socket.emit("join_order_room", id);
+    }
+
 
     socket.on("order_status_updated", (data) => {
       setStatus(data.status);
-      alert(`Order Update: Your order is now ${data.status}`);
+      console.log("Status updated:", data.status);
     });
 
     return () => {
@@ -34,6 +39,8 @@ const OrderTrackingPage = () => {
     };
   }, [id]);
 
+
+  if (error) return <div className="p-8 text-center text-red-500">Failed to load order. It may not exist.</div>;
   if (!order) return <div className="p-8 text-center">Loading order...</div>;
 
   return (
