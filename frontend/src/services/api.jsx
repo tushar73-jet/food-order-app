@@ -22,3 +22,5 @@ export const fetchMyOrders = () => API.get("/orders/my-orders");
 export const fetchOrderById = (id) => API.get(`/orders/${id}`);
 export const createPaymentIntent = (amount) =>
   API.post("/orders/create-payment-intent", { amount });
+export const confirmPayment = (paymentData) =>
+  API.post("/orders/confirm-payment", paymentData);
