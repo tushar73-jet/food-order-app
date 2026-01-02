@@ -14,6 +14,7 @@ router.get("/", async (req, res) => {
     });
     res.json(restaurants);
   } catch (error) {
+    console.error("Error in GET /api/restaurants:", error);
     res.status(500).json({ error: "Server error fetching restaurants" });
   }
 });
