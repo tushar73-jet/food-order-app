@@ -16,8 +16,8 @@ if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
 
 router.post("/create-order", protect, async (req, res) => {
   if (!razorpay) {
-    return res.status(503).json({ 
-      error: "Payment service not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in environment variables." 
+    return res.status(503).json({
+      error: "Payment service not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in environment variables."
     });
   }
 
@@ -52,8 +52,8 @@ router.post("/create-order", protect, async (req, res) => {
 
 router.post("/verify-payment", protect, async (req, res) => {
   if (!razorpay) {
-    return res.status(503).json({ 
-      error: "Payment service not configured." 
+    return res.status(503).json({
+      error: "Payment service not configured."
     });
   }
 
@@ -95,7 +95,7 @@ router.post("/verify-payment", protect, async (req, res) => {
 
       const orderItemsData = items.map((item) => ({
         orderId: order.id,
-        productId: item.productId,
+        productId: item.productId, // ID is already string from frontend/mongo
         quantity: item.quantity,
       }));
 
@@ -141,7 +141,7 @@ router.get("/:id", protect, async (req, res) => {
 
   try {
     const order = await prisma.order.findUnique({
-      where: { id: Number(id) },
+      where: { id },
       include: {
         items: {
           include: {
@@ -172,7 +172,7 @@ router.put("/:id/status", async (req, res) => {
 
   try {
     const updatedOrder = await prisma.order.update({
-      where: { id: Number(id) },
+      where: { id },
       data: { status },
     });
 

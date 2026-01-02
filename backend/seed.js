@@ -23,71 +23,17 @@ async function main() {
   await prisma.product.deleteMany({});
   await prisma.restaurant.deleteMany({});
 
-  await prisma.restaurant.createMany({
-    data: [
-      {
-        name: "Biryani Blues",
-        description: "Authentic Hyderabadi Biryani and Mughlai cuisine",
-        cuisine: "Mughlai",
-        imageUrl: "https://cdn.dotpe.in/longtail/store-logo/8083669/caQzIq5G.webp",
-        rating: 4.5,
-        deliveryTime: 30,
-        minOrder: 200,
-      },
-      {
-        name: "Dosa Express",
-        description: "South Indian specialties - Dosas, Idlis, Vadas",
-        cuisine: "South Indian",
-        imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQS9hfbv0cvIj_84-seP-fMKMOUXMaaKb7F0Q&s",
-        rating: 4.3,
-        deliveryTime: 25,
-        minOrder: 150,
-      },
-      {
-        name: "Butter Chicken House",
-        description: "North Indian curries and tandoori delights",
-        cuisine: "North Indian",
-        imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5WxDl6ZHmddeERvclizSYNUTsyy5lf54t7g&s",
-        rating: 4.6,
-        deliveryTime: 35,
-        minOrder: 250,
-      },
-      {
-        name: "Bombay Pav Bhaji",
-        description: "Street food favorites - Pav Bhaji, Vada Pav, Chaat",
-        cuisine: "Street Food",
-        imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbIvXKAgStqKjmYARPfKSRa7SZmnufc5Y8wQ&s",
-        rating: 4.4,
-        deliveryTime: 20,
-        minOrder: 100,
-      },
-      {
-        name: "Thali Special",
-        description: "Complete meals with roti, dal, rice, sabzi",
-        cuisine: "Gujarati",
-        imageUrl: "https://file.aiquickdraw.com/imgcompressed/img/compressed_7ae0c341da44ee7212b4a6389d9e71bc.webp",
-        rating: 4.2,
-        deliveryTime: 25,
-        minOrder: 180,
-      },
-      {
-        name: "Bella Italia",
-        description: "Authentic Italian and European cuisine - Pasta, Pizza, and Continental dishes",
-        cuisine: "Italian",
-        imageUrl: "https://www.agritalia.com/wp-content/uploads/2023/02/BELLAITALIA_LOGO.jpg",
-        rating: 4.7,
-        deliveryTime: 30,
-        minOrder: 300,
-      },
-    ],
-  });
-
-  const allRestaurants = await prisma.restaurant.findMany();
-
-  const products = [
+  // Create restaurants first
+  for (const restaurantData of [
     {
-      restaurantId: allRestaurants[0].id,
-      data: [
+      name: "Biryani Blues",
+      description: "Authentic Hyderabadi Biryani and Mughlai cuisine",
+      cuisine: "Mughlai",
+      imageUrl: "https://cdn.dotpe.in/longtail/store-logo/8083669/caQzIq5G.webp",
+      rating: 4.5,
+      deliveryTime: 30,
+      minOrder: 200,
+      products: [
         {
           name: "Hyderabadi Biryani",
           description: "Aromatic basmati rice with tender chicken, spices, and fried onions",
@@ -95,7 +41,7 @@ async function main() {
           category: "Biryani",
           imageUrl: "https://images.unsplash.com/photo-1701579231349-d7459c40919d?w=800&q=80"
 
-,
+          ,
         },
         {
           name: "Mutton Biryani",
@@ -110,7 +56,7 @@ async function main() {
           price: 220,
           category: "Starters",
           imageUrl: "https://plus.unsplash.com/premium_photo-1663854478639-1d72bce092b5?w=800&q=80"
-,
+          ,
         },
         {
           name: "Mutton Curry",
@@ -119,11 +65,17 @@ async function main() {
           category: "Curry",
           imageUrl: "https://images.unsplash.com/photo-1534939561126-855b8675edd7?w=800&q=80",
         },
-      ],
+      ]
     },
     {
-      restaurantId: allRestaurants[1].id,
-      data: [
+      name: "Dosa Express",
+      description: "South Indian specialties - Dosas, Idlis, Vadas",
+      cuisine: "South Indian",
+      imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQS9hfbv0cvIj_84-seP-fMKMOUXMaaKb7F0Q&s",
+      rating: 4.3,
+      deliveryTime: 25,
+      minOrder: 150,
+      products: [
         {
           name: "Masala Dosa",
           description: "Crispy dosa filled with spiced potato masala",
@@ -150,14 +102,20 @@ async function main() {
           description: "Thick pancake with vegetables, served with chutney",
           price: 85,
           category: "Dosa",
-          imageUrl:"https://www.spiceupthecurry.com/wp-content/uploads/2016/08/uttapam-recipe-2-1-500x500.jpg"
+          imageUrl: "https://www.spiceupthecurry.com/wp-content/uploads/2016/08/uttapam-recipe-2-1-500x500.jpg"
           ,
         },
-      ],
+      ]
     },
     {
-      restaurantId: allRestaurants[2].id,
-      data: [
+      name: "Butter Chicken House",
+      description: "North Indian curries and tandoori delights",
+      cuisine: "North Indian",
+      imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5WxDl6ZHmddeERvclizSYNUTsyy5lf54t7g&s",
+      rating: 4.6,
+      deliveryTime: 35,
+      minOrder: 250,
+      products: [
         {
           name: "Butter Chicken",
           description: "Creamy tomato-based curry with tender chicken pieces",
@@ -186,11 +144,17 @@ async function main() {
           category: "Starters",
           imageUrl: "https://images.unsplash.com/photo-1701579231320-cc2f7acad3cd?w=1740",
         },
-      ],
+      ]
     },
     {
-      restaurantId: allRestaurants[3].id,
-      data: [
+      name: "Bombay Pav Bhaji",
+      description: "Street food favorites - Pav Bhaji, Vada Pav, Chaat",
+      cuisine: "Street Food",
+      imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbIvXKAgStqKjmYARPfKSRa7SZmnufc5Y8wQ&s",
+      rating: 4.4,
+      deliveryTime: 20,
+      minOrder: 100,
+      products: [
         {
           name: "Pav Bhaji",
           description: "Spiced vegetable curry served with buttered pav",
@@ -219,11 +183,17 @@ async function main() {
           category: "Street Food",
           imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQzcAEHJpbYcroUmiNck1ueEJLW_PUJZeTUVA&s",
         },
-      ],
+      ]
     },
     {
-      restaurantId: allRestaurants[4].id,
-      data: [
+      name: "Thali Special",
+      description: "Complete meals with roti, dal, rice, sabzi",
+      cuisine: "Gujarati",
+      imageUrl: "https://file.aiquickdraw.com/imgcompressed/img/compressed_7ae0c341da44ee7212b4a6389d9e71bc.webp",
+      rating: 4.2,
+      deliveryTime: 25,
+      minOrder: 180,
+      products: [
         {
           name: "Gujarati Thali",
           description: "Complete meal with dal, sabzi, roti, rice, pickle, and sweet",
@@ -245,11 +215,17 @@ async function main() {
           category: "Thali",
           imageUrl: "https://images.unsplash.com/photo-1589778655375-3e622a9fc91c?w=1662",
         },
-      ],
+      ]
     },
     {
-      restaurantId: allRestaurants[5].id,
-      data: [
+      name: "Bella Italia",
+      description: "Authentic Italian and European cuisine - Pasta, Pizza, and Continental dishes",
+      cuisine: "Italian",
+      imageUrl: "https://www.agritalia.com/wp-content/uploads/2023/02/BELLAITALIA_LOGO.jpg",
+      rating: 4.7,
+      deliveryTime: 30,
+      minOrder: 300,
+      products: [
         {
           name: "Margherita Pizza",
           description: "Classic Italian pizza with tomato, mozzarella, and basil",
@@ -278,17 +254,23 @@ async function main() {
           category: "Salad",
           imageUrl: "https://images.unsplash.com/photo-1546793665-c74683f339c1?w=800&h=600&fit=crop&q=90",
         },
-      ],
+      ]
     },
-  ];
+  ]) {
+    const { products, ...rest } = restaurantData;
 
-  for (const restaurantProducts of products) {
-    await prisma.product.createMany({
-      data: restaurantProducts.data.map((p) => ({
-        ...p,
-        restaurantId: restaurantProducts.restaurantId,
-      })),
+    const createdRestaurant = await prisma.restaurant.create({
+      data: rest
     });
+
+    if (products && products.length > 0) {
+      await prisma.product.createMany({
+        data: products.map(p => ({
+          ...p,
+          restaurantId: createdRestaurant.id
+        }))
+      });
+    }
   }
 
   console.log("Database seeded successfully!");

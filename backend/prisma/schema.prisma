@@ -3,12 +3,12 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id       Int      @id @default(autoincrement())
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
   email    String   @unique
   name     String?
   password String
@@ -16,26 +16,26 @@ model User {
 }
 
 model Restaurant {
-  id          Int       @id @default(autoincrement())
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
   name        String
-  description String?   @db.Text
+  description String?
   cuisine     String
   imageUrl    String
-  rating      Decimal   @db.Decimal(3, 2) @default(4.5)
+  rating      Float     @default(4.5)
   deliveryTime Int      @default(30)
-  minOrder    Decimal   @db.Decimal(10, 2) @default(0)
+  minOrder    Float     @default(0)
   products    Product[]
   createdAt   DateTime  @default(now())
 }
 
 model Product {
-  id           Int           @id @default(autoincrement())
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
   name         String
-  description  String        @db.Text
-  price        Decimal       @db.Decimal(10, 2)
+  description  String
+  price        Float
   imageUrl     String
   category     String
-  restaurantId Int
+  restaurantId String        @db.ObjectId
   restaurant   Restaurant    @relation(fields: [restaurantId], references: [id])
   orderItems   OrderItem[]
 }
@@ -49,11 +49,11 @@ enum OrderStatus {
 }
 
 model Order {
-  id            Int         @id @default(autoincrement())
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
   user          User        @relation(fields: [userId], references: [id])
-  userId        Int
-  totalPrice    Decimal     @db.Decimal(10, 2)
-  status OrderStatus @default(PENDING)
+  userId        String      @db.ObjectId
+  totalPrice    Float
+  status        OrderStatus @default(PENDING)
   
   paymentId     String?     
   paymentStatus String      @default("UNPAID")
@@ -64,10 +64,10 @@ model Order {
 }
 
 model OrderItem {
-  id        Int     @id @default(autoincrement())
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
   order     Order   @relation(fields: [orderId], references: [id])
-  orderId   Int
+  orderId   String  @db.ObjectId
   product   Product @relation(fields: [productId], references: [id])
-  productId Int
+  productId String  @db.ObjectId
   quantity  Int
 }
