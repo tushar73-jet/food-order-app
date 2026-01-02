@@ -12,6 +12,16 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Root route for health check
+app.get("/", (req, res) => {
+  res.json({ message: "Backend is running successfully!" });
+});
+
+// API root route
+app.get("/api", (req, res) => {
+  res.json({ message: "API is reachable" });
+});
+
 const allowedOrigins = [
   "https://food-order-app-ten-sigma.vercel.app",
   "https://food-order-app-git-main-tushar73-jets-projects.vercel.app",
