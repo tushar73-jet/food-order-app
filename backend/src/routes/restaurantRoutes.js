@@ -23,7 +23,7 @@ router.get("/:id", async (req, res) => {
   const { id } = req.params;
   try {
     const restaurant = await prisma.restaurant.findUnique({
-      where: { id },
+      where: { id: parseInt(id) },
       include: {
         products: true,
       },

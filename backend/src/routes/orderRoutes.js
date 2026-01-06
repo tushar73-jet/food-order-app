@@ -95,7 +95,7 @@ router.post("/verify-payment", protect, async (req, res) => {
 
       const orderItemsData = items.map((item) => ({
         orderId: order.id,
-        productId: item.productId, // ID is already string from frontend/mongo
+        productId: item.productId,
         quantity: item.quantity,
       }));
 
@@ -141,7 +141,7 @@ router.get("/:id", protect, async (req, res) => {
 
   try {
     const order = await prisma.order.findUnique({
-      where: { id },
+      where: { id: Number(id) },
       include: {
         items: {
           include: {
@@ -172,7 +172,7 @@ router.put("/:id/status", async (req, res) => {
 
   try {
     const updatedOrder = await prisma.order.update({
-      where: { id },
+      where: { id: Number(id) },
       data: { status },
     });
 
