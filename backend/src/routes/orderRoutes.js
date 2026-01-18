@@ -162,7 +162,7 @@ router.get("/:id", protect, async (req, res) => {
   }
 });
 
-router.put("/:id/status", async (req, res) => {
+router.put("/:id/status", protect, async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
