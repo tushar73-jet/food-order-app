@@ -21,3 +21,9 @@ export const fetchMyOrders = () => API.get("/orders/my-orders");
 export const fetchOrderById = (id) => API.get(`/orders/${id}`);
 export const createRazorpayOrder = (amount) => API.post("/orders/create-order", { amount });
 export const verifyPayment = (paymentData) => API.post("/orders/verify-payment", paymentData);
+
+// Cart
+export const fetchCart = () => API.get("/cart");
+export const syncCart = (items) => API.post("/cart", { items });
+export const clearCartApi = () => API.delete("/cart");
+
