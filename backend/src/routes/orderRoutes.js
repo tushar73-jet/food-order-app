@@ -46,7 +46,8 @@ router.post("/create-order", protect, async (req, res) => {
       keyId: process.env.RAZORPAY_KEY_ID,
     });
   } catch (error) {
-    res.status(500).json({ error: "Failed to create payment order" });
+    console.error("Razorpay Order Error:", error);
+    res.status(500).json({ error: "Failed to create payment order due to invalid Razorpay Keys." });
   }
 });
 

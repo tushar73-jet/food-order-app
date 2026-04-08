@@ -1,3 +1,18 @@
+import { 
+  Box, 
+  Container, 
+  VStack, 
+  Heading, 
+  Text, 
+  Input, 
+  Button, 
+  Alert, 
+  Center, 
+  Stack, 
+  Separator, 
+  HStack,
+  SimpleGrid
+} from "@chakra-ui/react";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { login } from "../services/api";
@@ -20,48 +35,107 @@ const LoginPage = () => {
       localStorage.setItem("user", JSON.stringify(data.user));
       navigate("/");
     } catch (err) {
-      setError(err.response?.data?.error || "Login failed. Please try again.");
+      setError(err.response?.data?.error || "Login failed. Check your credentials.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <h2>Welcome Back</h2>
-        <p className="auth-subtitle">Login to your account</p>
-        <form onSubmit={handleSubmit} className="auth-form">
-          {error && <div className="alert alert-error">{error}</div>}
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="your@email.com"
-            />
-          </div>
-          <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="Enter your password"
-            />
-          </div>
-          <button type="submit" disabled={loading} className="btn btn-primary btn-large btn-full">
-            {loading ? "Logging in..." : "Login"}
-          </button>
-        </form>
-        <p className="auth-footer">
-          Don't have an account? <Link to="/register">Register here</Link>
-        </p>
-      </div>
-    </div>
+    <Box bg="#fcfcfc" minH="90vh" display="flex" alignItems="center">
+        <Container maxW="container.lg">
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={20} align="center">
+                <VStack align="flex-start" spacing={8} display={{ base: "none", md: "flex" }}>
+                    <Heading size="4xl" fontWeight="900" letterSpacing="tight">
+                        Experience <br/>
+                        <Text as="span" color="#e53e3e">the best</Text> <br/>
+                        food delivery.
+                    </Heading>
+                    <Text fontSize="xl" color="gray.500" fontWeight="600" lineHeight="1.8">
+                        Login to access your personalized dashboard, track orders, and get exclusive member discounts.
+                    </Text>
+                </VStack>
+
+                <Box bg="white" p={12} borderRadius="3xl" boxShadow="2xl" w="full" maxW="450px" borderWidth="1px" borderColor="gray.100">
+                    <VStack spacing={8} align="stretch" as="form" onSubmit={handleSubmit}>
+                        <VStack align="flex-start" spacing={1}>
+                            <Heading size="xl" fontWeight="900">Sign In</Heading>
+                            <Text color="gray.400" fontWeight="700">Welcome back to foodstore</Text>
+                        </VStack>
+
+                        {error && (
+                            <Alert.Root status="error" borderRadius="xl">
+                                {error}
+                            </Alert.Root>
+                        )}
+
+                        <VStack spacing={4}>
+                            <Input 
+                                type="email" 
+                                placeholder="Email Address" 
+                                size="lg" 
+                                h="14" 
+                                borderRadius="xl" 
+                                bg="gray.50" 
+                                border="none" 
+                                fontWeight="600"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                            />
+                            <Input 
+                                type="password" 
+                                placeholder="Password" 
+                                size="lg" 
+                                h="14" 
+                                borderRadius="xl" 
+                                bg="gray.50" 
+                                border="none" 
+                                fontWeight="600"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
+                        </VStack>
+
+                        <Button 
+                            type="submit" 
+                            bg="#e53e3e" 
+                            color="white" 
+                            size="xl" 
+                            h="16" 
+                            borderRadius="2xl" 
+                            fontWeight="900" 
+                            fontSize="xl" 
+                            isLoading={loading}
+                            _hover={{ bg: "#c53030", transform: 'translateY(-2px)', shadow: 'xl' }}
+                        >
+                            Log In
+                        </Button>
+
+                        <HStack w="full" justify="center" py={4}>
+                            <Separator />
+                            <Text color="gray.300" fontSize="xs" fontWeight="900" whiteSpace="nowrap" px={4}>OR JOIN US</Text>
+                            <Separator />
+                        </HStack>
+
+                        <Button 
+                            as={Link} 
+                            to="/register" 
+                            variant="outline" 
+                            size="lg" 
+                            h="14" 
+                            borderRadius="xl" 
+                            fontWeight="800"
+                            borderColor="gray.200"
+                        >
+                            Create Account
+                        </Button>
+                    </VStack>
+                </Box>
+            </SimpleGrid>
+        </Container>
+    </Box>
   );
 };
 

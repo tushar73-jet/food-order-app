@@ -22,6 +22,10 @@ export default function RazorpayCheckout({ orderId, amount, currency, keyId, onS
       try {
         await loadRazorpayScript();
 
+        // Prefill from local user data if available
+        const userString = localStorage.getItem("user");
+        const user = userString ? JSON.parse(userString) : {};
+
         const options = {
           key: keyId,
           amount: amount,
@@ -33,15 +37,15 @@ export default function RazorpayCheckout({ orderId, amount, currency, keyId, onS
             onSuccess(response);
           },
           prefill: {
-            name: "",
-            email: "",
-            contact: "",
+            name: user?.name || "",
+            email: user?.email || "",
+            contact: user?.phone || "",
           },
           notes: {
             address: "FoodStore Order",
           },
           theme: {
-            color: "#6366f1",
+            color: "#e53e3e",
           },
           modal: {
             ondismiss: function () {
@@ -64,4 +68,3 @@ export default function RazorpayCheckout({ orderId, amount, currency, keyId, onS
 
   return null;
 }
-
