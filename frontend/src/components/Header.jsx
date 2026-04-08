@@ -14,7 +14,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 
 const Header = () => {
-  const { cartItems, clearCart } = useCart();
+  const { cartItems, clearLocalCart } = useCart();
   const navigate = useNavigate();
   const userString = localStorage.getItem("user");
   const user = userString ? JSON.parse(userString) : null;
@@ -25,7 +25,7 @@ const Header = () => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    clearCart();
+    clearLocalCart();
     navigate("/login");
   };
 

@@ -132,7 +132,7 @@ export default function MyOrdersPage() {
                              minW="120px"
                              textAlign="center"
                           >
-                            {order.status}
+                            {order.status.replace(/_/g, " ")}
                           </Badge>
                       </HStack>
                     </HStack>

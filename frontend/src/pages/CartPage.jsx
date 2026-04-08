@@ -41,7 +41,7 @@ const CartPage = () => {
     setPaymentError(null);
 
     try {
-      const { data } = await createRazorpayOrder(getTotalPrice());
+      const { data } = await createRazorpayOrder(grandTotal);
       setRazorpayOrder(data);
     } catch (error) {
       const errorMessage = error.response?.data?.error || error.message || "Unknown error";
@@ -52,7 +52,12 @@ const CartPage = () => {
 
   const handlePaymentSuccess = async (response) => {
     try {
-      const { data } = await verifyPayment(response);
+      const payload = {
+        ...response,
+        items: cartItems.map(item => ({ productId: item.id, quantity: item.quantity })),
+        totalPrice: grandTotal
+      };
+      const { data } = await verifyPayment(payload);
       clearCart();
       setRazorpayOrder(null);
       navigate(`/track/${data.id}`);

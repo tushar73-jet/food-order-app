@@ -23,20 +23,14 @@ app.get("/api", (req, res) => {
   res.json({ message: "API is reachable" });
 });
 
-const allowedOrigins = [
-  "https://food-order-app-ten-sigma.vercel.app",
-  "https://food-order-app-git-main-tushar73-jets-projects.vercel.app",
-  "https://food-order-app-1-tkp5.onrender.com",
-  "http://localhost:5173",
-  "http://localhost:3000",
-];
+ 
 
-app.use(
-  cors({
-    origin: allowedOrigins,
-    credentials: true,
-  })
-);
+const corsOptions = {
+  origin: true, // Echoes the request origin dynamically
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json());
 
@@ -44,7 +38,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: true,
     methods: ["GET", "POST", "PUT"],
     credentials: true,
   },

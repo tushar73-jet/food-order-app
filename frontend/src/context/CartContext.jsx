@@ -80,6 +80,11 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  const clearLocalCart = () => {
+    setCartItems([]);
+    localStorage.removeItem("cart");
+  };
+
   const getTotalPrice = () => {
     return cartItems
       .reduce((total, item) => total + Number(item.price) * item.quantity, 0)
@@ -93,6 +98,7 @@ export const CartProvider = ({ children }) => {
         addToCart,
         removeFromCart,
         clearCart,
+        clearLocalCart,
         getTotalPrice,
       }}
     >
