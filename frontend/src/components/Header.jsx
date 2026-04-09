@@ -110,6 +110,11 @@ const Header = () => {
                       <Menu.Item value="orders" borderRadius="lg" fontWeight="700" fontSize="sm" onClick={() => navigate("/orders")} mt={1}>
                         📦 My Orders
                       </Menu.Item>
+                      {user?.role === "ADMIN" && (
+                        <Menu.Item value="admin" borderRadius="lg" fontWeight="700" fontSize="sm" onClick={() => navigate("/admin/orders")}>
+                          👨‍🍳 Admin Panel
+                        </Menu.Item>
+                      )}
                       <Menu.Item value="logout" borderRadius="lg" fontWeight="700" fontSize="sm" color="#e53e3e" onClick={handleLogout}>
                         🚪 Logout
                       </Menu.Item>

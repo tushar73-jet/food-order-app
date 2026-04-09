@@ -2,7 +2,7 @@ import express from "express";
 import Razorpay from "razorpay";
 import crypto from "crypto";
 import prisma from "../lib/prisma.js";
-import { protect } from "../middleware/authMiddleware.js";
+import { protect, admin } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -137,6 +137,27 @@ router.get("/my-orders", protect, async (req, res) => {
   }
 });
 
+router.get("/admin/all", protect, admin, async (req, res) => {
+  try {
+    const orders = await prisma.order.findMany({
+      include: {
+        user: true,
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to load admin orders" });
+  }
+});
+
 router.get("/:id", protect, async (req, res) => {
   const { id } = req.params;
 
@@ -163,7 +184,7 @@ router.get("/:id", protect, async (req, res) => {
   }
 });
 
-router.put("/:id/status", protect, async (req, res) => {
+router.put("/:id/status", protect, admin, async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 

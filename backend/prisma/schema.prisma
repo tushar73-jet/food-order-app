@@ -2,6 +2,12 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum Role {
+  USER
+  ADMIN
+  RIDER
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -9,10 +15,13 @@ datasource db {
 
 model User {
   id       Int      @id @default(autoincrement())
-  email    String   @unique
-  name     String?
-  password String
-  orders   Order[]
+  email                String    @unique
+  name                 String?
+  password             String
+  role                 Role      @default(USER)
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  orders               Order[]
   cart     Cart?
 }
 

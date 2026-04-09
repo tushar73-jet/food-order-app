@@ -13,7 +13,8 @@ import {
   CardRoot,
   CardBody,
   Image,
-  Spacer
+  Spacer,
+  Button
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
@@ -130,6 +131,7 @@ export default function OrderTrackingPage() {
                     <Heading size="3xl" fontWeight="900" letterSpacing="tight">
                         Tracking Order <Text as="span" color="#e53e3e">#{id}</Text>
                     </Heading>
+
                     <HStack spacing={4} flexWrap="wrap">
                         <Badge 
                           bg={statusColors[status]?.bg || "gray.50"} 
@@ -220,7 +222,7 @@ export default function OrderTrackingPage() {
                                             <Heading size="sm" fontWeight="800">{item.product?.name || "Dish"}</Heading>
                                             <Text color="gray.400" fontSize="xs" fontWeight="700">Qty: {item.quantity}</Text>
                                         </VStack>
-                                        <Text fontWeight="900" fontSize="lg">₹{(Number(item.price) * item.quantity).toFixed(2)}</Text>
+                                        <Text fontWeight="900" fontSize="lg">₹{(Number(item.product?.price || 0) * item.quantity).toFixed(2)}</Text>
                                     </HStack>
                                 </CardBody>
                             </CardRoot>
