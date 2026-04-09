@@ -27,6 +27,8 @@ export const login = (formData) => API.post("/auth/login", formData);
 export const register = (formData) => API.post("/auth/register", formData);
 export const forgotPassword = (email) => API.post("/auth/forgot-password", { email });
 export const resetPassword = (token, password) => API.post(`/auth/reset-password/${token}`, { password });
+export const fetchAllUsers = () => API.get("/auth/users");
+export const updateUserRole = (id, role) => API.put(`/auth/users/${id}/role`, { role });
 
 export const fetchRestaurants = () => API.get("/restaurants");
 export const fetchRestaurantById = (id) => API.get(`/restaurants/${id}`);
@@ -35,7 +37,7 @@ export const fetchMyOrders = () => API.get("/orders/my-orders");
 export const fetchOrderById = (id) => API.get(`/orders/${id}`);
 export const fetchAllAdminOrders = () => API.get("/orders/admin/all");
 export const updateOrderStatus = (id, status) => API.put(`/orders/${id}/status`, { status });
-export const createRazorpayOrder = (amount) => API.post("/orders/create-order", { amount });
+export const createRazorpayOrder = (items) => API.post("/orders/create-order", { items });
 export const verifyPayment = (paymentData) => API.post("/orders/verify-payment", paymentData);
 
 // Cart

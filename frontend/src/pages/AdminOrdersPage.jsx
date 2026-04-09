@@ -16,6 +16,7 @@ import {
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { fetchAllAdminOrders, updateOrderStatus } from "../services/api";
+import { Link } from "react-router-dom";
 
 const STATUSES = ["PENDING", "PREPARING", "OUT_FOR_DELIVERY", "DELIVERED"];
 
@@ -100,6 +101,11 @@ export default function AdminOrdersPage() {
                     <Badge colorScheme="green" variant="solid" px={4} py={2} borderRadius="xl" fontSize="sm">
                         🟢 {orders.filter(o => o.status !== "DELIVERED" && o.status !== "CANCELLED").length} Active
                     </Badge>
+                    <Link to="/admin/users">
+                        <Button colorScheme="whiteAlpha" variant="solid" px={6} borderRadius="xl">
+                            Manage Riders 🏍️
+                        </Button>
+                    </Link>
                 </HStack>
             </Container>
         </Box>

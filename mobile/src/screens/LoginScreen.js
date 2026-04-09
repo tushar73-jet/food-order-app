@@ -34,8 +34,17 @@ export default function LoginScreen({ navigation }) {
       // Tell CartContext to pick up the new token
       if(refreshToken) await refreshToken(); 
       
-      // Navigate to Home/Restaurants
-      navigation.replace('Restaurants');
+      // Role-Based Navigation Routing
+      if (data.user.role === 'RIDER') {
+        navigation.replace('RiderDashboard');
+      } else if (data.user.role === 'ADMIN') {
+        Alert.alert("Notice", "Restaurant Owners must use the Web Dashboard. Logging out...");
+        await AsyncStorage.removeItem('token');
+        await AsyncStorage.removeItem('user');
+      } else {
+        // Normal User
+        navigation.replace('Restaurants');
+      }
     } catch (err) {
       Alert.alert('Login Failed', err.response?.data?.error || 'Check your credentials.');
     } finally {

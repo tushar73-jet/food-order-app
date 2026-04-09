@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import prisma from "../lib/prisma.js";
+import { protect, admin } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -155,6 +156,50 @@ router.post("/reset-password/:token", async (req, res) => {
   } catch (error) {
     console.error("Reset password error:", error);
     res.status(500).json({ error: "Server error during password reset" });
+  }
+});
+
+// Admin: Get all users
+router.get("/users", protect, admin, async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+      },
+      // Removed non-existent createdAt to avoid 500 error
+    });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
+});
+
+// Admin: Update user role
+router.put("/users/:id/role", protect, admin, async (req, res) => {
+  const { id } = req.params;
+  const { role } = req.body;
+
+  if (!["USER", "ADMIN", "RIDER"].includes(role)) {
+    return res.status(400).json({ error: "Invalid role" });
+  }
+
+  try {
+    const updatedUser = await prisma.user.update({
+      where: { id: parseInt(id) },
+      data: { role },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+      },
+    });
+    res.json(updatedUser);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update user role" });
   }
 });
 

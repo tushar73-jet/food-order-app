@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Header from "./components/Header";
 import RestaurantsPage from "./pages/RestaurantsPage";
 import RestaurantPage from "./pages/RestaurantPage";
@@ -8,6 +8,15 @@ import RegisterPage from "./pages/RegisterPage";
 import OrderTrackingPage from "./pages/OrderTrackingPage";
 import MyOrdersPage from "./pages/MyOrdersPage";
 import AdminOrdersPage from "./pages/AdminOrdersPage";
+import AdminUsersPage from "./pages/AdminUsersPage";
+
+const AdminRoute = ({ children }) => {
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  if (!user || user.role !== "ADMIN") {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+};
 
 function App() {
   return (
@@ -21,7 +30,16 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/orders" element={<MyOrdersPage />} />
         <Route path="/track/:id" element={<OrderTrackingPage />} />
-        <Route path="/admin/orders" element={<AdminOrdersPage />} />
+        <Route path="/admin/orders" element={
+          <AdminRoute>
+            <AdminOrdersPage />
+          </AdminRoute>
+        } />
+        <Route path="/admin/users" element={
+          <AdminRoute>
+            <AdminUsersPage />
+          </AdminRoute>
+        } />
       </Routes>
     </div>
   );
