@@ -2,13 +2,35 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import { z } from "zod";
 import prisma from "../lib/prisma.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
+import { validate } from "../middleware/validate.js";
+import { env } from "../config/env.js";
 
 const router = express.Router();
 
-router.post("/register", async (req, res) => {
-  const { email, password, name } = req.body;
+const RegisterSchema = z.object({
+  body: z
+    .object({
+      email: z.string().email(),
+      password: z.string().min(8),
+      name: z.string().min(1).max(120).optional(),
+    })
+    .strict(),
+});
+
+const LoginSchema = z.object({
+  body: z
+    .object({
+      email: z.string().email(),
+      password: z.string().min(1),
+    })
+    .strict(),
+});
+
+router.post("/register", validate(RegisterSchema), async (req, res) => {
+  const { email, password, name } = req.validated.body;
 
   if (!email || !password) {
     return res.status(400).json({ error: "Please provide email and password" });
@@ -44,8 +66,8 @@ router.post("/register", async (req, res) => {
   }
 });
 
-router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
+router.post("/login", validate(LoginSchema), async (req, res) => {
+  const { email, password } = req.validated.body;
 
   try {
     const user = await prisma.user.findUnique({ where: { email } });
@@ -60,8 +82,8 @@ router.post("/login", async (req, res) => {
 
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "100h" } // extended expiry for better dev experience
+      env.JWT_SECRET,
+      { expiresIn: env.JWT_EXPIRES_IN }
     );
 
     res.json({
