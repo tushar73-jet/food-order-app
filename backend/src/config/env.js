@@ -1,10 +1,14 @@
+import dotenv from "dotenv";
 import { z } from "zod";
+
+// Ensure .env is loaded even in ESM import order scenarios.
+dotenv.config();
 
 const EnvSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).optional().default("development"),
   PORT: z.coerce.number().int().positive().optional(),
   DATABASE_URL: z.string().min(1),
-  JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
+  JWT_SECRET: z.string().min(1),
   JWT_EXPIRES_IN: z.string().min(1).optional().default("7d"),
   CORS_ORIGINS: z.string().optional(), // comma-separated list; if unset we fall back to request origin in dev only
 
@@ -22,6 +26,10 @@ export const env = (() => {
     // Fail fast: production should never boot with invalid env.
     throw new Error(`Invalid environment variables:\n${message}`);
   }
-  return parsed.data;
+  const value = parsed.data;
+  if (value.NODE_ENV === "production" && value.JWT_SECRET.length < 32) {
+    throw new Error("Invalid environment variables:\nJWT_SECRET: JWT_SECRET must be at least 32 characters");
+  }
+  return value;
 })();
 

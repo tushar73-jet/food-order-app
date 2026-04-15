@@ -1,31 +1,60 @@
 import express from "express";
 import Razorpay from "razorpay";
 import crypto from "crypto";
+import { z } from "zod";
 import prisma from "../lib/prisma.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
+import { validate } from "../middleware/validate.js";
+import { env } from "../config/env.js";
 
 const router = express.Router();
 
 let razorpay;
-if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+if (env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET) {
   razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET,
+    key_id: env.RAZORPAY_KEY_ID,
+    key_secret: env.RAZORPAY_KEY_SECRET,
   });
 }
 
-router.post("/create-order", protect, async (req, res) => {
+const ItemsSchema = z
+  .array(
+    z
+      .object({
+        productId: z.coerce.number().int().positive(),
+        quantity: z.coerce.number().int().positive().max(50),
+      })
+      .strict()
+  )
+  .min(1);
+
+const CreateOrderSchema = z.object({
+  body: z
+    .object({
+      items: ItemsSchema,
+    })
+    .strict(),
+});
+
+const VerifyPaymentSchema = z.object({
+  body: z
+    .object({
+      razorpay_order_id: z.string().min(1),
+      razorpay_payment_id: z.string().min(1),
+      razorpay_signature: z.string().min(1),
+      items: ItemsSchema,
+    })
+    .strict(),
+});
+
+router.post("/create-order", protect, validate(CreateOrderSchema), async (req, res) => {
   if (!razorpay) {
     return res.status(503).json({
       error: "Payment service not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in environment variables."
     });
   }
 
-  const { items } = req.body;
-
-  if (!items || items.length === 0) {
-    return res.status(400).json({ error: "No items provided" });
-  }
+  const { items } = req.validated.body;
 
   try {
     // 🛡️ SECURE: Calculate the real total exclusively from the Database 
@@ -54,7 +83,7 @@ router.post("/create-order", protect, async (req, res) => {
       id: razorpayOrder.id,
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency,
-      keyId: process.env.RAZORPAY_KEY_ID,
+      keyId: env.RAZORPAY_KEY_ID,
     });
   } catch (error) {
     console.error("Razorpay Order Error:", error);
@@ -62,41 +91,33 @@ router.post("/create-order", protect, async (req, res) => {
   }
 });
 
-router.post("/verify-payment", protect, async (req, res) => {
+router.post("/verify-payment", protect, validate(VerifyPaymentSchema), async (req, res) => {
   if (!razorpay) {
     return res.status(503).json({
       error: "Payment service not configured."
     });
   }
 
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, items } = req.body;
-
-  if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !items || items.length === 0) {
-    return res.status(400).json({ error: "Missing required fields" });
-  }
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, items } =
+    req.validated.body;
 
   try {
-    // 🛡️ MOBILE TEST BYPASS
-    if (razorpay_payment_id === "MOBILE_TEST_PAYMENT") {
-       // Allow it to pass to simulate mobile ordering
-    } else {
-        // Verify payment signature
-        const text = `${razorpay_order_id}|${razorpay_payment_id}`;
-        const generated_signature = crypto
-          .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-          .update(text)
-          .digest("hex");
+    // Verify payment signature (required in all environments)
+    const text = `${razorpay_order_id}|${razorpay_payment_id}`;
+    const generated_signature = crypto
+      .createHmac("sha256", env.RAZORPAY_KEY_SECRET)
+      .update(text)
+      .digest("hex");
 
-        if (generated_signature !== razorpay_signature) {
-          return res.status(400).json({ error: "Invalid payment signature" });
-        }
+    if (generated_signature !== razorpay_signature) {
+      return res.status(400).json({ error: "Invalid payment signature" });
+    }
 
-        // Verify payment with Razorpay
-        const payment = await razorpay.payments.fetch(razorpay_payment_id);
+    // Verify payment with Razorpay (defense-in-depth)
+    const payment = await razorpay.payments.fetch(razorpay_payment_id);
 
-        if (payment.status !== "captured" && payment.status !== "authorized") {
-          return res.status(400).json({ error: "Payment not completed" });
-        }
+    if (payment.status !== "captured" && payment.status !== "authorized") {
+      return res.status(400).json({ error: "Payment not completed" });
     }
 
     // Create order with payment info
@@ -105,6 +126,7 @@ router.post("/verify-payment", protect, async (req, res) => {
       let computedTotal = 0;
       for (const item of items) {
          const product = await tx.product.findUnique({ where: { id: item.productId } });
+         if (!product) throw new Error(`Product ${item.productId} not found`);
          computedTotal += (Number(product.price) * item.quantity);
       }
       const finalAmount = computedTotal + (computedTotal * 0.05);
@@ -136,6 +158,36 @@ router.post("/verify-payment", protect, async (req, res) => {
     res.status(500).json({ error: "Failed to verify payment and create order" });
   }
 });
+
+// Razorpay Webhook (server-to-server). Do NOT put this behind JWT auth.
+// Requires RAZORPAY_WEBHOOK_SECRET.
+router.post(
+  "/razorpay/webhook",
+  express.raw({ type: "application/json" }),
+  (req, res) => {
+    if (!env.RAZORPAY_WEBHOOK_SECRET) {
+      return res.status(503).json({ error: "Webhook not configured" });
+    }
+
+    const signature = req.headers["x-razorpay-signature"];
+    if (typeof signature !== "string") {
+      return res.status(400).json({ error: "Missing signature" });
+    }
+
+    const expected = crypto
+      .createHmac("sha256", env.RAZORPAY_WEBHOOK_SECRET)
+      .update(req.body)
+      .digest("hex");
+
+    if (expected !== signature) {
+      return res.status(400).json({ error: "Invalid signature" });
+    }
+
+    // At this point the webhook is authentic. You can parse and persist events here.
+    // We acknowledge immediately to avoid retries/timeouts.
+    return res.status(200).json({ received: true });
+  }
+);
 
 router.get("/my-orders", protect, async (req, res) => {
   const userId = req.userId;
