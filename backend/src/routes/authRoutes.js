@@ -51,15 +51,15 @@ router.post("/register", validate(RegisterSchema), async (req, res) => {
       },
     });
 
-    res.status(201).json({ 
-      message: "User created!", 
+    res.status(201).json({
+      message: "User created!",
       userId: user.id,
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
         role: user.role,
-      } 
+      }
     });
   } catch (error) {
     console.error("Registration error:", error);
@@ -130,11 +130,11 @@ router.post("/forgot-password", async (req, res) => {
 
     // In a real app we email this. Here we just return it so it can be copied from the UI for demo.
     const resetUrl = `http://localhost:3000/reset-password/${resetToken}`;
-    
+
     // Send it to the client purely for developer demo purposes (Not safe for prod)
-    res.json({ 
-      message: "Password reset link generated successfully.", 
-      resetUrl 
+    res.json({
+      message: "Password reset link generated successfully.",
+      resetUrl
     });
 
   } catch (error) {

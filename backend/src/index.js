@@ -33,8 +33,8 @@ app.get("/api/health", async (req, res) => {
     console.error("Health Check DB Error:", error);
   }
 
-  res.json({ 
-    status: "healthy", 
+  res.json({
+    status: "healthy",
     database: dbStatus,
     timestamp: new Date().toISOString(),
     env: env.NODE_ENV,
