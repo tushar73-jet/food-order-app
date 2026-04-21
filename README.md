@@ -44,7 +44,7 @@ cd food-order-app
 ```bash
 cd backend
 npm install
-# Configure .env: DATABASE_URL, JWT_SECRET, PORT, RAZORPAY_KEYS
+# Configure .env: DATABASE_URL, JWT_SECRET, PORT, RAZORPAY_KEYS, CORS_ORIGINS
 npx prisma migrate dev
 npm run dev
 ```
@@ -59,9 +59,9 @@ npm run dev
 
 ### 4. Mobile App Setup
 ```bash
-cd ../mobile
+cd mobile
 npm install
-# Configure src/services/api.js with your Mac's IP address
+# Configure .env: API_URL (see .env.example)
 npx expo start
 ```
 

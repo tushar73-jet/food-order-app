@@ -32,6 +32,8 @@ const CreateOrderSchema = z.object({
   body: z
     .object({
       items: ItemsSchema,
+      deliveryAddress: z.string().min(5),
+      contactNumber: z.string().min(10),
     })
     .strict(),
 });
@@ -43,6 +45,8 @@ const VerifyPaymentSchema = z.object({
       razorpay_payment_id: z.string().min(1),
       razorpay_signature: z.string().min(1),
       items: ItemsSchema,
+      deliveryAddress: z.string().min(5),
+      contactNumber: z.string().min(10),
     })
     .strict(),
 });
@@ -98,7 +102,7 @@ router.post("/verify-payment", protect, validate(VerifyPaymentSchema), async (re
     });
   }
 
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, items } =
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, items, deliveryAddress, contactNumber } =
     req.validated.body;
 
   try {
@@ -144,6 +148,8 @@ router.post("/verify-payment", protect, validate(VerifyPaymentSchema), async (re
           totalPrice: parseFloat(finalAmount.toFixed(2)),
           paymentId: razorpay_payment_id,
           paymentStatus: "PAID",
+          deliveryAddress,
+          contactNumber,
         },
       });
 
@@ -294,7 +300,7 @@ router.get("/:id", protect, async (req, res) => {
   }
 });
 
-router.put("/:id/status", protect, admin, async (req, res) => {
+router.put("/:id/status", protect, rider, async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 

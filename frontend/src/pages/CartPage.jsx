@@ -15,7 +15,9 @@ import {
   Badge, 
   Alert, 
   Center, 
-  Spacer 
+  Spacer,
+  Input,
+  Field
 } from "@chakra-ui/react";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
@@ -28,6 +30,8 @@ const CartPage = () => {
   const [loading, setLoading] = useState(false);
   const [razorpayOrder, setRazorpayOrder] = useState(null);
   const [paymentError, setPaymentError] = useState(null);
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [contactNumber, setContactNumber] = useState("");
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
@@ -37,12 +41,19 @@ const CartPage = () => {
       return;
     }
 
-    setLoading(true);
-    setPaymentError(null);
+    if (!deliveryAddress || deliveryAddress.length < 5 || !contactNumber || contactNumber.length < 10) {
+      setPaymentError("Please provide a valid delivery address and contact number.");
+      setLoading(false);
+      return;
+    }
 
     try {
       const payloadItems = cartItems.map(item => ({ productId: item.id, quantity: item.quantity }));
-      const { data } = await createRazorpayOrder(payloadItems);
+      const { data } = await createRazorpayOrder({
+        items: payloadItems,
+        deliveryAddress,
+        contactNumber
+      });
       setRazorpayOrder(data);
     } catch (error) {
       const errorMessage = error.response?.data?.error || error.message || "Unknown error";
@@ -55,7 +66,9 @@ const CartPage = () => {
     try {
       const payload = {
         ...response,
-        items: cartItems.map(item => ({ productId: item.id, quantity: item.quantity }))
+        items: cartItems.map(item => ({ productId: item.id, quantity: item.quantity })),
+        deliveryAddress,
+        contactNumber
       };
       const { data } = await verifyPayment(payload);
       clearCart();
@@ -225,6 +238,30 @@ const CartPage = () => {
                     <Text fontSize="xl" fontWeight="800" color="black">Total</Text>
                     <Text fontSize="3xl" fontWeight="900" color="#e53e3e">₹{grandTotal}</Text>
                 </HStack>
+
+                <Box bg="#fff5f5" p={6} borderRadius="2xl" border="2px solid" borderColor="#feb2b2">
+                   <Heading size="sm" fontWeight="800" mb={4} color="#c53030">Delivery Details</Heading>
+                   <VStack spacing={4}>
+                      <Field.Root invalid={deliveryAddress && deliveryAddress.length < 5}>
+                        <Input 
+                          placeholder="Full Delivery Address" 
+                          variant="subtle"
+                          bg="white"
+                          value={deliveryAddress}
+                          onChange={(e) => setDeliveryAddress(e.target.value)}
+                        />
+                      </Field.Root>
+                      <Field.Root invalid={contactNumber && contactNumber.length < 10}>
+                        <Input 
+                          placeholder="Contact Number" 
+                          variant="subtle"
+                          bg="white"
+                          value={contactNumber}
+                          onChange={(e) => setContactNumber(e.target.value)}
+                        />
+                      </Field.Root>
+                   </VStack>
+                </Box>
 
                 {!token && (
                   <Alert.Root status="warning" borderRadius="xl" fontSize="sm">

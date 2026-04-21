@@ -18,8 +18,9 @@ export const CartProvider = ({ children }) => {
       if (token) {
         try {
           const { data } = await fetchCart();
-          if (data && data.length > 0) {
-            setCartItems(data);
+          const items = data.items || [];
+          if (items.length > 0) {
+            setCartItems(items);
           } else if (cartItems.length > 0) {
             // If local cart has items but database is empty, sync local to DB
             await syncCart(cartItems);

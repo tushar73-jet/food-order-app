@@ -37,7 +37,7 @@ export const fetchMyOrders = () => API.get("/orders/my-orders");
 export const fetchOrderById = (id) => API.get(`/orders/${id}`);
 export const fetchAllAdminOrders = () => API.get("/orders/admin/all");
 export const updateOrderStatus = (id, status) => API.put(`/orders/${id}/status`, { status });
-export const createRazorpayOrder = (items) => API.post("/orders/create-order", { items });
+export const createRazorpayOrder = (orderData) => API.post("/orders/create-order", orderData);
 export const verifyPayment = (paymentData) => API.post("/orders/verify-payment", paymentData);
 
 // Cart

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, TextInput } from 'react-native';
 import { useCart } from '../context/CartContext';
 import { verifyPayment } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -8,6 +8,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function CartScreen({ navigation }) {
   const { cartItems, removeFromCart, addToCart, clearCart, getTotalPrice } = useCart();
   const [loading, setLoading] = useState(false);
+  const [address, setAddress] = useState('');
+  const [phone, setPhone] = useState('');
 
   const subtotal = Number(getTotalPrice());
   const tax = subtotal * 0.05;
@@ -17,6 +19,11 @@ export default function CartScreen({ navigation }) {
     const token = await AsyncStorage.getItem("token");
     if (!token) {
       navigation.navigate("Login");
+      return;
+    }
+
+    if (address.length < 5 || phone.length < 10) {
+      Alert.alert("Missing Info", "Please provide a valid delivery address and contact number.");
       return;
     }
 
@@ -32,6 +39,8 @@ export default function CartScreen({ navigation }) {
         razorpay_payment_id: "MOBILE_TEST_PAYMENT",
         razorpay_signature: "MOBILE_TEST_SIG",
         items: cartItems.map(item => ({ productId: item.id, quantity: item.quantity })),
+        deliveryAddress: address,
+        contactNumber: phone,
       };
       
       const { data } = await verifyPayment(payload);
@@ -90,6 +99,24 @@ export default function CartScreen({ navigation }) {
       <View style={styles.summaryBox}>
         <View style={styles.row}><Text style={styles.summaryLabel}>Subtotal</Text><Text style={styles.summaryVal}>₹{subtotal.toFixed(2)}</Text></View>
         <View style={styles.row}><Text style={styles.summaryLabel}>GST (5%)</Text><Text style={styles.summaryVal}>₹{tax.toFixed(2)}</Text></View>
+        
+        <View style={styles.deliveryBox}>
+          <Text style={styles.deliveryTitle}>Deliver To</Text>
+          <TextInput 
+            style={styles.input} 
+            placeholder="Delivery Address" 
+            value={address}
+            onChangeText={setAddress}
+          />
+          <TextInput 
+            style={styles.input} 
+            placeholder="Contact Number" 
+            keyboardType="phone-pad"
+            value={phone}
+            onChangeText={setPhone}
+          />
+        </View>
+
         <View style={[styles.row, { marginTop: 10, borderTopWidth: 1, borderColor: '#edf2f7', paddingTop: 10 }]}>
           <Text style={styles.totalLabel}>Total</Text><Text style={styles.totalVal}>₹{grandTotal.toFixed(2)}</Text>
         </View>
@@ -128,6 +155,9 @@ const styles = StyleSheet.create({
   summaryVal: { fontWeight: '700' },
   totalLabel: { fontSize: 20, fontWeight: '900' },
   totalVal: { fontSize: 24, fontWeight: '900', color: '#e53e3e' },
-  checkoutBtn: { marginTop: 20, backgroundColor: '#e53e3e', padding: 16, borderRadius: 16, alignItems: 'center' },
+  deliveryBox: { backgroundColor: '#fff5f5', padding: 15, borderRadius: 12, marginVertical: 15, borderWidth: 1, borderColor: '#feb2b2' },
+  deliveryTitle: { fontSize: 16, fontWeight: '900', color: '#c53030', marginBottom: 10 },
+  input: { backgroundColor: 'white', padding: 12, borderRadius: 8, marginBottom: 10, borderWidth: 1, borderColor: '#edf2f7', fontWeight: '600' },
+  checkoutBtn: { marginTop: 10, backgroundColor: '#e53e3e', padding: 16, borderRadius: 16, alignItems: 'center' },
   checkoutText: { color: 'white', fontWeight: '900', fontSize: 16 }
 });

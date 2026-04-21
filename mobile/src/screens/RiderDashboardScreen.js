@@ -67,6 +67,11 @@ export default function RiderDashboardScreen({ navigation }) {
                 <Text style={styles.price}>₹{item.totalPrice}</Text>
               </View>
               <Text style={styles.customerName}>👤 {item.user?.name || 'Customer'}</Text>
+              <View style={styles.deliveryInfo}>
+                <Text style={styles.deliveryLabel}>📍 Deliver To:</Text>
+                <Text style={styles.deliveryAddr}>{item.deliveryAddress}</Text>
+                <Text style={styles.deliveryContact}>📞 {item.contactNumber}</Text>
+              </View>
               <Text style={styles.itemsDesc}>{item.items.length} items to deliver</Text>
               
               <TouchableOpacity 
@@ -95,6 +100,10 @@ const styles = StyleSheet.create({
   orderId: { fontSize: 22, fontWeight: '900', color: '#2b6cb0' },
   price: { fontSize: 20, fontWeight: '900', color: '#2d3748' },
   customerName: { fontSize: 16, fontWeight: '700', color: '#4a5568', marginBottom: 4 },
+  deliveryInfo: { backgroundColor: '#f0f4f8', padding: 12, borderRadius: 12, marginVertical: 10, borderWidth: 1, borderColor: '#d9e2ec' },
+  deliveryLabel: { fontSize: 12, fontWeight: '900', color: '#627d98', textTransform: 'uppercase', marginBottom: 4 },
+  deliveryAddr: { fontSize: 14, fontWeight: '700', color: '#334e68' },
+  deliveryContact: { fontSize: 14, fontWeight: '900', color: '#3182ce', mt: 4 },
   itemsDesc: { color: '#a0aec0', marginBottom: 20, fontWeight: '600' },
   actionBtn: { backgroundColor: '#48bb78', padding: 16, borderRadius: 12, alignItems: 'center' },
   actionText: { color: 'white', fontWeight: '900', fontSize: 16 }

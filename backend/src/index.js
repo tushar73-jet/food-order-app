@@ -33,6 +33,9 @@ if (!env.RAZORPAY_WEBHOOK_SECRET) {
 if (env.ALLOW_DEMO_PAYMENTS) {
   console.info("🚀 INFO: ALLOW_DEMO_PAYMENTS is enabled. Mobile testing mode is ACTIVE.");
 }
+if (env.NODE_ENV === "production" && !env.CORS_ORIGINS) {
+  console.warn("⚠️  WARNING: CORS_ORIGINS is not set in production. Browser requests will be BLOCKED.");
+}
 
  
 
@@ -52,9 +55,12 @@ const corsOptions = {
     }
 
     if (allowedOrigins.includes(origin)) return callback(null, true);
+    
+    console.error(`❌ CORS blocked origin: ${origin}`);
     return callback(new Error("CORS: Origin not allowed"), false);
   },
   credentials: true,
+  optionsSuccessStatus: 200, // Important for legacy browsers/preflights
 };
 
 app.use(cors(corsOptions));

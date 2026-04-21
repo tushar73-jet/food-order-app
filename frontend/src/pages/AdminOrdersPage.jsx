@@ -150,10 +150,16 @@ export default function AdminOrdersPage() {
                                                         <Text key={i.id} fontSize="xs" fontWeight="600" color="gray.700" noOfLines={1}>
                                                             {i.quantity}x {i.product?.name}
                                                         </Text>
-                                                    ))}
+                                                     ))}
                                                     {order.items.length > 2 && (
                                                         <Text fontSize="xs" color="gray.400" fontWeight="700">+{order.items.length - 2} more items</Text>
                                                     )}
+                                                </Box>
+
+                                                <Box borderTop="1px dashed" borderColor="gray.200" pt={2}>
+                                                    <Text fontSize="2xs" fontWeight="800" color="gray.400" textTransform="uppercase">Deliver To:</Text>
+                                                    <Text fontSize="xs" fontWeight="700" color="gray.600" noOfLines={2}>{order.deliveryAddress}</Text>
+                                                    <Text fontSize="xs" fontWeight="700" color="blue.500" mt={1}>📞 {order.contactNumber}</Text>
                                                 </Box>
                                                 
                                                 <HStack justify="space-between" align="center">

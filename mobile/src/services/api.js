@@ -38,7 +38,7 @@ export const fetchMyOrders = () => API.get("/orders/my-orders");
 export const fetchOrderById = (id) => API.get(`/orders/${id}`);
 
 // Note: Razorpay integration on RN will require react-native-razorpay module.
-export const createRazorpayOrder = (items) => API.post("/orders/create-order", { items });
+export const createRazorpayOrder = (orderData) => API.post("/orders/create-order", orderData);
 export const verifyPayment = (paymentData) => API.post("/orders/verify-payment", paymentData);
 
 // Rider
