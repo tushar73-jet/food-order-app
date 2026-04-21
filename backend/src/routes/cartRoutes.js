@@ -27,7 +27,10 @@ router.get("/", protect, async (req, res) => {
             quantity: item.quantity,
         }));
 
-        res.json(formattedItems);
+        res.json({
+            items: formattedItems,
+            updatedAt: cart.updatedAt,
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

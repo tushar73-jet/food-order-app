@@ -15,6 +15,7 @@ const EnvSchema = z.object({
   RAZORPAY_KEY_ID: z.string().optional(),
   RAZORPAY_KEY_SECRET: z.string().optional(),
   RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
+  ALLOW_DEMO_PAYMENTS: z.preprocess((val) => val === "true" || val === true, z.boolean()).optional().default(false),
 });
 
 export const env = (() => {

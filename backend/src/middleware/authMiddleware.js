@@ -32,3 +32,11 @@ export const admin = (req, res, next) => {
     res.status(403).json({ error: "Not authorized as an admin" });
   }
 };
+
+export const rider = (req, res, next) => {
+  if (req.userRole && (req.userRole === "RIDER" || req.userRole === "ADMIN")) {
+    next();
+  } else {
+    res.status(403).json({ error: "Not authorized as a rider" });
+  }
+};

@@ -22,7 +22,11 @@ export default function CartScreen({ navigation }) {
 
     setLoading(true);
     try {
-      // Simulate Razorpay Mobile Payment Bypass
+      /**
+       * 💡 Portfolio Note: 
+       * This uses an explicit "Demo Payment" signature which is only accepted
+       * by the backend if ALLOW_DEMO_PAYMENTS=true is set in the environment.
+       */
       const payload = {
         razorpay_order_id: "MOBILE_TEST_ORDER",
         razorpay_payment_id: "MOBILE_TEST_PAYMENT",
@@ -34,7 +38,11 @@ export default function CartScreen({ navigation }) {
       clearCart();
       navigation.navigate('TrackOrder', { id: data.id });
     } catch (error) {
-      Alert.alert("Checkout Failed", error.response?.data?.error || "Network error");
+      const errorDetail = error.response?.data?.error || "Payment verification failed.";
+      Alert.alert(
+        "Checkout Restricted", 
+        `${errorDetail}\n\nNote: For portfolio review, ensure ALLOW_DEMO_PAYMENTS=true is set on the backend.`
+      );
     } finally {
       setLoading(false);
     }
@@ -91,7 +99,7 @@ export default function CartScreen({ navigation }) {
           onPress={handleCheckout} 
           disabled={loading}
         >
-          <Text style={styles.checkoutText}>{loading ? "Processing..." : "Place Order (Demo Pay)"}</Text>
+          <Text style={styles.checkoutText}>{loading ? "Processing..." : "Secure Checkout (Demo Mode)"}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

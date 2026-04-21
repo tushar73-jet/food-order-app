@@ -3,7 +3,7 @@ import Razorpay from "razorpay";
 import crypto from "crypto";
 import { z } from "zod";
 import prisma from "../lib/prisma.js";
-import { protect, admin } from "../middleware/authMiddleware.js";
+import { protect, admin, rider } from "../middleware/authMiddleware.js";
 import { validate } from "../middleware/validate.js";
 import { env } from "../config/env.js";
 
@@ -102,22 +102,29 @@ router.post("/verify-payment", protect, validate(VerifyPaymentSchema), async (re
     req.validated.body;
 
   try {
-    // Verify payment signature (required in all environments)
-    const text = `${razorpay_order_id}|${razorpay_payment_id}`;
-    const generated_signature = crypto
-      .createHmac("sha256", env.RAZORPAY_KEY_SECRET)
-      .update(text)
-      .digest("hex");
+    if (razorpay_payment_id === "MOBILE_TEST_PAYMENT" && razorpay_signature === "MOBILE_TEST_SIG") {
+      if (!env.ALLOW_DEMO_PAYMENTS) {
+        return res.status(403).json({ error: "Demo payments are disabled in this environment." });
+      }
+      // Continue to create order since demo mode is allowed
+    } else {
+      // Normal Razorpay verification logic
+      const text = `${razorpay_order_id}|${razorpay_payment_id}`;
+      const generated_signature = crypto
+        .createHmac("sha256", env.RAZORPAY_KEY_SECRET)
+        .update(text)
+        .digest("hex");
 
-    if (generated_signature !== razorpay_signature) {
-      return res.status(400).json({ error: "Invalid payment signature" });
-    }
+      if (generated_signature !== razorpay_signature) {
+        return res.status(400).json({ error: "Invalid payment signature" });
+      }
 
-    // Verify payment with Razorpay (defense-in-depth)
-    const payment = await razorpay.payments.fetch(razorpay_payment_id);
+      // Verify payment with Razorpay (defense-in-depth)
+      const payment = await razorpay.payments.fetch(razorpay_payment_id);
 
-    if (payment.status !== "captured" && payment.status !== "authorized") {
-      return res.status(400).json({ error: "Payment not completed" });
+      if (payment.status !== "captured" && payment.status !== "authorized") {
+        return res.status(400).json({ error: "Payment not completed" });
+      }
     }
 
     // Create order with payment info
@@ -210,6 +217,33 @@ router.get("/my-orders", protect, async (req, res) => {
     res.json(orders);
   } catch (error) {
     res.status(500).json({ error: "Failed to load orders" });
+  }
+});
+
+// Rider: Get live orders assigned to them (or all active for demo)
+router.get("/rider/active", protect, rider, async (req, res) => {
+  try {
+    const orders = await prisma.order.findMany({
+      where: {
+        status: "OUT_FOR_DELIVERY", // Strict filter for riders
+      },
+      include: {
+        user: {
+           select: { name: true, email: true }
+        },
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to load active deliveries" });
   }
 });
 

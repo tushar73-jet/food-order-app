@@ -10,6 +10,7 @@ export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [isReady, setIsReady] = useState(false);
   const [token, setToken] = useState(null);
+  const [lastModified, setLastModified] = useState(0);
 
   // Initialize cart from AsyncStorage and check for token
   useEffect(() => {
@@ -19,11 +20,14 @@ export const CartProvider = ({ children }) => {
         setToken(storedToken);
 
         const storedCart = await AsyncStorage.getItem("cart");
+        const storedTimestamp = await AsyncStorage.getItem("cart_last_modified");
+        
         if (storedCart) {
           setCartItems(JSON.parse(storedCart));
+          setLastModified(Number(storedTimestamp) || Date.now());
         }
       } catch (error) {
-        console.error("Failed to load initial cart/token data", error);
+        console.error("❌ Failed to load initial cart/token data:", error);
       } finally {
         setIsReady(true);
       }
@@ -36,15 +40,23 @@ export const CartProvider = ({ children }) => {
     const loadCartIfLoggedIn = async () => {
       if (token && isReady) {
         try {
-          const { data } = await fetchCart();
-          if (data && data.length > 0) {
-            setCartItems(data);
+          const { data } = await fetchCart(); // Now returns { items, updatedAt }
+          const serverItems = data.items || [];
+          const serverUpdatedAt = new Date(data.updatedAt).getTime();
+
+          // 🛡️ Deterministic Sync: Server state wins if it's newer than the last local modification
+          if (serverUpdatedAt > lastModified) {
+            console.log("🔄 Cart Sync: Server state prioritized (Server is newer)");
+            setCartItems(serverItems);
+            setLastModified(serverUpdatedAt);
+            await AsyncStorage.setItem("cart", JSON.stringify(serverItems));
+            await AsyncStorage.setItem("cart_last_modified", serverUpdatedAt.toString());
           } else if (cartItems.length > 0) {
-            // If local cart has items but database is empty, sync local to DB
+            console.log("📤 Cart Sync: Pushing local state to server (Local is newer)");
             await syncCart(cartItems);
           }
         } catch (error) {
-          console.error("Failed to fetch cart:", error);
+          console.warn("⚠️  Cart Sync Failed: Backend unreachable or session expired. Local state preserved.", error);
         }
       }
     };
@@ -53,17 +65,19 @@ export const CartProvider = ({ children }) => {
 
   // Sync cart with backend and AsyncStorage on change
   useEffect(() => {
-    if (!isReady) return; // don't overwrite if not initialized
+    if (!isReady) return; 
 
     const saveAndSync = async () => {
       try {
+        const now = Date.now();
         await AsyncStorage.setItem("cart", JSON.stringify(cartItems));
+        await AsyncStorage.setItem("cart_last_modified", now.toString());
 
         if (token) {
           await syncCart(cartItems);
         }
       } catch (error) {
-        console.error("Failed to sync cart:", error);
+        console.warn("⚠️  Sync failure: Could not persist cart to server. Will retry on next update.", error);
       }
     };
 
@@ -72,6 +86,7 @@ export const CartProvider = ({ children }) => {
   }, [cartItems, token, isReady]);
 
   const addToCart = (product) => {
+    setLastModified(Date.now());
     setCartItems((prevItems) => {
       const exist = prevItems.find((item) => item.id === product.id);
       if (exist) {

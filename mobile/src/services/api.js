@@ -1,11 +1,9 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// In React Native, process.env or import.meta.env depends on your configuration.
-// For local development, point it to your computer's IP address instead of localhost.
-// Replace this with your actual development machine IP using port 5000:
-const API_BASE_URL = "http://192.168.143.96:3001/api"; 
+import { API_URL } from "../config";
 
+const API_BASE_URL = API_URL;
 const API = axios.create({
   baseURL: API_BASE_URL,
 });
@@ -44,7 +42,7 @@ export const createRazorpayOrder = (items) => API.post("/orders/create-order", {
 export const verifyPayment = (paymentData) => API.post("/orders/verify-payment", paymentData);
 
 // Rider
-export const fetchRiderOrders = () => API.get("/orders/admin/all"); // Reusing admin route for Rider to see all orders
+export const fetchRiderOrders = () => API.get("/orders/rider/active");
 export const updateOrderStatus = (id, status) => API.put(`/orders/${id}/status`, { status });
 
 // Cart

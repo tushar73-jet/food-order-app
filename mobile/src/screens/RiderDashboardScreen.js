@@ -16,9 +16,7 @@ export default function RiderDashboardScreen({ navigation }) {
   const loadOrders = async () => {
     try {
       const { data } = await fetchRiderOrders();
-      // Riders only care about orders that are OUT_FOR_DELIVERY
-      const relevant = data.filter(o => o.status === 'OUT_FOR_DELIVERY');
-      setOrders(relevant);
+      setOrders(data);
     } catch (error) {
       console.log('Error loading rider orders', error);
     } finally {

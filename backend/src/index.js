@@ -26,6 +26,14 @@ app.get("/api", (req, res) => {
   res.json({ message: "API is reachable" });
 });
 
+// Startup Security Checks
+if (!env.RAZORPAY_WEBHOOK_SECRET) {
+  console.warn("⚠️  WARNING: RAZORPAY_WEBHOOK_SECRET is not configured. Webhooks will fail validation.");
+}
+if (env.ALLOW_DEMO_PAYMENTS) {
+  console.info("🚀 INFO: ALLOW_DEMO_PAYMENTS is enabled. Mobile testing mode is ACTIVE.");
+}
+
  
 
 const allowedOrigins = (env.CORS_ORIGINS || "")
