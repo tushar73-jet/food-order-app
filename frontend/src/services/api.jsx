@@ -14,10 +14,21 @@ API.interceptors.request.use((req) => {
 API.interceptors.response.use(
   (response) => response,
   (error) => {
+    console.error("API Error Details:", {
+      message: error.message,
+      url: error.config?.url,
+      method: error.config?.method,
+      status: error.response?.status,
+      data: error.response?.data
+    });
+
     if (error.response && error.response.status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      window.location.href = "/login";
+      // Only redirect if not already on login/register to avoid loops
+      if (!window.location.pathname.includes("/login") && !window.location.pathname.includes("/register")) {
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(error);
   }

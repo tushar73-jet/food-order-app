@@ -62,6 +62,7 @@ router.post("/register", validate(RegisterSchema), async (req, res) => {
       } 
     });
   } catch (error) {
+    console.error("Registration error:", error);
     res.status(500).json({ error: "Server error during registration" });
   }
 });

@@ -22,6 +22,15 @@ app.get("/", (req, res) => {
 });
 
 // API root route
+app.get("/api/health", (req, res) => {
+  res.json({ 
+    status: "healthy", 
+    timestamp: new Date().toISOString(),
+    env: env.NODE_ENV,
+    cors_allowed: !!env.CORS_ORIGINS
+  });
+});
+
 app.get("/api", (req, res) => {
   res.json({ message: "API is reachable" });
 });

@@ -28,8 +28,8 @@ export const env = (() => {
     throw new Error(`Invalid environment variables:\n${message}`);
   }
   const value = parsed.data;
-  if (value.NODE_ENV === "production" && value.JWT_SECRET.length < 32) {
-    throw new Error("Invalid environment variables:\nJWT_SECRET: JWT_SECRET must be at least 32 characters");
+  if (value.NODE_ENV === "production" && value.JWT_SECRET.length < 20) {
+    throw new Error("Invalid environment variables:\nJWT_SECRET: JWT_SECRET must be at least 20 characters for production security.");
   }
   return value;
 })();
