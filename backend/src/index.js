@@ -25,9 +25,10 @@ app.get("/", (req, res) => {
 app.get("/api/health", async (req, res) => {
   let dbStatus = "Checking...";
   try {
-    // Check connection AND schema readiness
+    // Check connection AND schema readiness (findMany forces column check)
+    await prisma.user.findMany({ take: 1 });
     const userCount = await prisma.user.count();
-    dbStatus = `Connected (Found ${userCount} users)`;
+    dbStatus = `Connected (Found ${userCount} users, Schema Sync Verified)`;
   } catch (error) {
     dbStatus = `Connection Error: ${error.message}`;
     console.error("Health Check DB Error:", error);

@@ -72,8 +72,8 @@ model Order {
   status          OrderStatus @default(PENDING)
   paymentId       String?
   paymentStatus   String      @default("UNPAID")
-  deliveryAddress String
-  contactNumber   String
+  deliveryAddress String?
+  contactNumber   String?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   user            User        @relation(fields: [userId], references: [id])
