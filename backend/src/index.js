@@ -22,9 +22,20 @@ app.get("/", (req, res) => {
 });
 
 // API root route
-app.get("/api/health", (req, res) => {
+app.get("/api/health", async (req, res) => {
+  let dbStatus = "Checking...";
+  try {
+    // Check connection AND schema readiness
+    const userCount = await prisma.user.count();
+    dbStatus = `Connected (Found ${userCount} users)`;
+  } catch (error) {
+    dbStatus = `Connection Error: ${error.message}`;
+    console.error("Health Check DB Error:", error);
+  }
+
   res.json({ 
     status: "healthy", 
+    database: dbStatus,
     timestamp: new Date().toISOString(),
     env: env.NODE_ENV,
     cors_allowed: !!env.CORS_ORIGINS
@@ -46,7 +57,7 @@ if (env.NODE_ENV === "production" && !env.CORS_ORIGINS) {
   console.warn("⚠️  WARNING: CORS_ORIGINS is not set in production. Browser requests will be BLOCKED.");
 }
 
- 
+
 
 const allowedOrigins = (env.CORS_ORIGINS || "")
   .split(",")
@@ -64,7 +75,7 @@ const corsOptions = {
     }
 
     if (allowedOrigins.includes(origin)) return callback(null, true);
-    
+
     console.error(`❌ CORS blocked origin: ${origin}`);
     return callback(new Error("CORS: Origin not allowed"), false);
   },
@@ -104,7 +115,7 @@ io.use((socket, next) => {
     const token =
       socket.handshake.auth?.token ||
       (typeof socket.handshake.headers?.authorization === "string" &&
-      socket.handshake.headers.authorization.startsWith("Bearer ")
+        socket.handshake.headers.authorization.startsWith("Bearer ")
         ? socket.handshake.headers.authorization.split(" ")[1]
         : undefined);
 

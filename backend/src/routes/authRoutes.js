@@ -63,7 +63,7 @@ router.post("/register", validate(RegisterSchema), async (req, res) => {
     });
   } catch (error) {
     console.error("Registration error:", error);
-    res.status(500).json({ error: "Server error during registration" });
+    res.status(500).json({ error: "Server error during registration", details: error.message });
   }
 });
 
@@ -99,7 +99,7 @@ router.post("/login", validate(LoginSchema), async (req, res) => {
     });
   } catch (error) {
     console.error("Login error:", error);
-    res.status(500).json({ error: "Server error during login" });
+    res.status(500).json({ error: "Server error during login", details: error.message });
   }
 });
 
