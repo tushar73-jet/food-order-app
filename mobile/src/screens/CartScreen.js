@@ -42,14 +42,14 @@ export default function CartScreen({ navigation }) {
         deliveryAddress: address,
         contactNumber: phone,
       };
-      
+
       const { data } = await verifyPayment(payload);
       clearCart();
       navigation.navigate('TrackOrder', { id: data.id });
     } catch (error) {
       const errorDetail = error.response?.data?.error || "Payment verification failed.";
       Alert.alert(
-        "Checkout Restricted", 
+        "Checkout Restricted",
         `${errorDetail}\n\nNote: For portfolio review, ensure ALLOW_DEMO_PAYMENTS=true is set on the backend.`
       );
     } finally {
@@ -83,15 +83,15 @@ export default function CartScreen({ navigation }) {
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (
           <View style={styles.cartItem}>
-             <View style={styles.itemInfo}>
-               <Text style={styles.itemName}>{item.name}</Text>
-               <Text style={styles.itemPrice}>₹{item.price}</Text>
-             </View>
-             <View style={styles.controls}>
-               <TouchableOpacity onPress={() => removeFromCart(item.id)} style={styles.ctrlBtn}><Text style={styles.ctrlText}>-</Text></TouchableOpacity>
-               <Text style={styles.qty}>{item.quantity}</Text>
-               <TouchableOpacity onPress={() => addToCart(item)} style={styles.ctrlBtn}><Text style={styles.ctrlText}>+</Text></TouchableOpacity>
-             </View>
+            <View style={styles.itemInfo}>
+              <Text style={styles.itemName}>{item.name}</Text>
+              <Text style={styles.itemPrice}>₹{item.price}</Text>
+            </View>
+            <View style={styles.controls}>
+              <TouchableOpacity onPress={() => removeFromCart(item.id)} style={styles.ctrlBtn}><Text style={styles.ctrlText}>-</Text></TouchableOpacity>
+              <Text style={styles.qty}>{item.quantity}</Text>
+              <TouchableOpacity onPress={() => addToCart(item)} style={styles.ctrlBtn}><Text style={styles.ctrlText}>+</Text></TouchableOpacity>
+            </View>
           </View>
         )}
       />
@@ -99,18 +99,18 @@ export default function CartScreen({ navigation }) {
       <View style={styles.summaryBox}>
         <View style={styles.row}><Text style={styles.summaryLabel}>Subtotal</Text><Text style={styles.summaryVal}>₹{subtotal.toFixed(2)}</Text></View>
         <View style={styles.row}><Text style={styles.summaryLabel}>GST (5%)</Text><Text style={styles.summaryVal}>₹{tax.toFixed(2)}</Text></View>
-        
+
         <View style={styles.deliveryBox}>
           <Text style={styles.deliveryTitle}>Deliver To</Text>
-          <TextInput 
-            style={styles.input} 
-            placeholder="Delivery Address" 
+          <TextInput
+            style={styles.input}
+            placeholder="Delivery Address"
             value={address}
             onChangeText={setAddress}
           />
-          <TextInput 
-            style={styles.input} 
-            placeholder="Contact Number" 
+          <TextInput
+            style={styles.input}
+            placeholder="Contact Number"
             keyboardType="phone-pad"
             value={phone}
             onChangeText={setPhone}
@@ -120,10 +120,10 @@ export default function CartScreen({ navigation }) {
         <View style={[styles.row, { marginTop: 10, borderTopWidth: 1, borderColor: '#edf2f7', paddingTop: 10 }]}>
           <Text style={styles.totalLabel}>Total</Text><Text style={styles.totalVal}>₹{grandTotal.toFixed(2)}</Text>
         </View>
-        
-        <TouchableOpacity 
-          style={styles.checkoutBtn} 
-          onPress={handleCheckout} 
+
+        <TouchableOpacity
+          style={styles.checkoutBtn}
+          onPress={handleCheckout}
           disabled={loading}
         >
           <Text style={styles.checkoutText}>{loading ? "Processing..." : "Secure Checkout (Demo Mode)"}</Text>
