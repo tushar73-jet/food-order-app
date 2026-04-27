@@ -168,6 +168,7 @@ router.post("/verify-payment", protect, validate(VerifyPaymentSchema), async (re
 
     res.status(201).json(newOrder);
   } catch (error) {
+    console.error("Verify Payment Error:", error);
     res.status(500).json({ error: "Failed to verify payment and create order" });
   }
 });
