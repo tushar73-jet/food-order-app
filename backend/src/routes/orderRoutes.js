@@ -4,6 +4,7 @@ import { protect, admin, rider } from "../middleware/authMiddleware.js";
 import { validate } from "../middleware/validate.js";
 import { orderController } from "../controllers/order.controller.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { ORDER_STATUS } from "../utils/constants.js";
 
 const router = express.Router();
 
@@ -57,6 +58,12 @@ router.get("/my-orders", protect, asyncHandler(orderController.getMyOrders));
 router.get("/rider/active", protect, rider, asyncHandler(orderController.getRiderActiveOrders));
 router.get("/admin/all", protect, admin, asyncHandler(orderController.getAllAdminOrders));
 router.get("/:id", protect, asyncHandler(orderController.getOrderById));
-router.put("/:id/status", protect, rider, asyncHandler(orderController.updateOrderStatus));
+const UpdateStatusSchema = z.object({
+  body: z.object({
+    status: z.enum(Object.values(ORDER_STATUS)),
+  }).strict(),
+});
+
+router.put("/:id/status", protect, rider, validate(UpdateStatusSchema), asyncHandler(orderController.updateOrderStatus));
 
 export default router;

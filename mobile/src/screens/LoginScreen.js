@@ -29,6 +29,7 @@ export default function LoginScreen({ navigation }) {
     try {
       const { data } = await login({ email, password });
       await AsyncStorage.setItem('token', data.token);
+      await AsyncStorage.setItem('refreshToken', data.refreshToken);
       await AsyncStorage.setItem('user', JSON.stringify(data.user));
       
       // Tell CartContext to pick up the new token

@@ -9,8 +9,10 @@ const EnvSchema = z.object({
   PORT: z.coerce.number().int().positive().optional(),
   DATABASE_URL: z.string().min(1),
   JWT_SECRET: z.string().min(1),
-  JWT_EXPIRES_IN: z.string().min(1).optional().default("7d"),
-  CORS_ORIGINS: z.string().optional(), // comma-separated list; if unset we fall back to request origin in dev only
+  JWT_EXPIRES_IN: z.string().min(1).optional().default("15m"),
+  JWT_REFRESH_SECRET: z.string().min(1).optional().default("refresh_secret_for_dev_mode"),
+  JWT_REFRESH_EXPIRES_IN: z.string().min(1).optional().default("7d"),
+  CORS_ORIGINS: z.string().optional(), // We'll validate this in the code below
 
   RAZORPAY_KEY_ID: z.string().optional(),
   RAZORPAY_KEY_SECRET: z.string().optional(),
@@ -24,12 +26,14 @@ export const env = (() => {
     const message = parsed.error.issues
       .map((i) => `${i.path.join(".") || "env"}: ${i.message}`)
       .join("\n");
-    // Fail fast: production should never boot with invalid env.
-    throw new Error(`Invalid environment variables:\n${message}`);
+          throw new Error(`Invalid environment variables:\n${message}`);
   }
   const value = parsed.data;
   if (value.NODE_ENV === "production" && value.JWT_SECRET.length < 20) {
     throw new Error("Invalid environment variables:\nJWT_SECRET: JWT_SECRET must be at least 20 characters for production security.");
+  }
+  if (value.NODE_ENV === "production" && !value.CORS_ORIGINS) {
+    throw new Error("Invalid environment variables:\nCORS_ORIGINS: CORS_ORIGINS is required in production.");
   }
   return value;
 })();

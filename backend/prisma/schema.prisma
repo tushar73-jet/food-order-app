@@ -19,6 +19,17 @@ model User {
   resetPasswordToken   String?
   cart                 Cart?
   orders               Order[]
+  refreshTokens        RefreshToken[]
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Cart {

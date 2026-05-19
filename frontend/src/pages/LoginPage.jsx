@@ -32,6 +32,7 @@ const LoginPage = () => {
     try {
       const { data } = await login({ email, password });
       localStorage.setItem("token", data.token);
+      localStorage.setItem("refreshToken", data.refreshToken);
       localStorage.setItem("user", JSON.stringify(data.user));
       navigate("/");
     } catch (err) {

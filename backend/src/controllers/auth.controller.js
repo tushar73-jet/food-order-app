@@ -11,6 +11,12 @@ export const authController = {
     res.json(result);
   },
 
+  refreshToken: async (req, res) => {
+    const { refreshToken } = req.body;
+    const result = await authService.refreshAuthToken(refreshToken);
+    res.json(result);
+  },
+
   forgotPassword: async (req, res) => {
     const { email } = req.body;
     const result = await authService.forgotPassword(email);

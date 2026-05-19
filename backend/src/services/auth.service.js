@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { userRepository } from "../repositories/user.repository.js";
+import { tokenRepository } from "../repositories/token.repository.js";
 import { AppError } from "../utils/AppError.js";
 import { env } from "../config/env.js";
 import { sendResetEmail } from "../lib/mailer.js";
@@ -20,9 +21,21 @@ export const authService = {
       name,
     });
 
+    const token = jwt.sign(
+      { userId: user.id, email: user.email, role: user.role },
+      env.JWT_SECRET,
+      { expiresIn: env.JWT_EXPIRES_IN }
+    );
+    
+    const refreshToken = crypto.randomBytes(40).toString('hex');
+    const refreshTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    await tokenRepository.createRefreshToken(user.id, refreshToken, refreshTokenExpiresAt);
+
     return {
       message: "User created!",
       userId: user.id,
+      token,
+      refreshToken,
       user: {
         id: user.id,
         email: user.email,
@@ -48,10 +61,15 @@ export const authService = {
       env.JWT_SECRET,
       { expiresIn: env.JWT_EXPIRES_IN }
     );
+    
+    const refreshToken = crypto.randomBytes(40).toString('hex');
+    const refreshTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    await tokenRepository.createRefreshToken(user.id, refreshToken, refreshTokenExpiresAt);
 
     return {
       message: "Logged in successfully",
       token,
+      refreshToken,
       user: {
         id: user.id,
         email: user.email,
@@ -59,6 +77,32 @@ export const authService = {
         role: user.role,
       },
     };
+  },
+
+  refreshAuthToken: async (refreshTokenStr) => {
+    if (!refreshTokenStr) {
+      throw new AppError("Refresh token is required", 401);
+    }
+    
+    const tokenDoc = await tokenRepository.findRefreshToken(refreshTokenStr);
+    
+    if (!tokenDoc) {
+      throw new AppError("Invalid refresh token", 401);
+    }
+    
+    if (tokenDoc.revokedAt || new Date() > tokenDoc.expiresAt) {
+      throw new AppError("Refresh token expired or revoked", 401);
+    }
+    
+    const user = tokenDoc.user;
+    
+    const newAccessToken = jwt.sign(
+      { userId: user.id, email: user.email, role: user.role },
+      env.JWT_SECRET,
+      { expiresIn: env.JWT_EXPIRES_IN }
+    );
+    
+    return { token: newAccessToken };
   },
 
   forgotPassword: async (email) => {

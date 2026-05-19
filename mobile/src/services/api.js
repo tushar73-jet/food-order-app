@@ -19,10 +19,28 @@ API.interceptors.request.use(async (req) => {
 API.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response && error.response.status === 401) {
+    const originalRequest = error.config;
+
+    if (error.response && error.response.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      const refreshToken = await AsyncStorage.getItem("refreshToken");
+
+      if (refreshToken && !originalRequest.url.includes('/auth/refresh')) {
+        try {
+          const res = await axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken });
+          if (res.data.token) {
+            await AsyncStorage.setItem("token", res.data.token);
+            originalRequest.headers.Authorization = `Bearer ${res.data.token}`;
+            return API(originalRequest);
+          }
+        } catch (refreshError) {
+          console.error("Refresh token failed", refreshError);
+        }
+      }
+
       await AsyncStorage.removeItem("token");
+      await AsyncStorage.removeItem("refreshToken");
       await AsyncStorage.removeItem("user");
-      // Optional: Navigation redirect can be handled via state or a global emitter
     }
     return Promise.reject(error);
   }

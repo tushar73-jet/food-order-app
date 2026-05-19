@@ -13,19 +13,31 @@ API.interceptors.request.use((req) => {
 
 API.interceptors.response.use(
   (response) => response,
-  (error) => {
-    console.error("API Error Details:", {
-      message: error.message,
-      url: error.config?.url,
-      method: error.config?.method,
-      status: error.response?.status,
-      data: error.response?.data
-    });
+  async (error) => {
+    const originalRequest = error.config;
 
-    if (error.response && error.response.status === 401) {
+    if (error.response && error.response.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      const refreshToken = localStorage.getItem("refreshToken");
+
+      if (refreshToken && !originalRequest.url.includes('/auth/refresh')) {
+        try {
+          // Use base axios to avoid interceptor loop
+          const res = await axios.post(`${API.defaults.baseURL}/auth/refresh`, { refreshToken });
+          if (res.data.token) {
+            localStorage.setItem("token", res.data.token);
+            originalRequest.headers.Authorization = `Bearer ${res.data.token}`;
+            return API(originalRequest);
+          }
+        } catch (refreshError) {
+          console.error("Refresh token failed", refreshError);
+        }
+      }
+
+      // If refresh failed or no refresh token, logout
       localStorage.removeItem("token");
+      localStorage.removeItem("refreshToken");
       localStorage.removeItem("user");
-      // Only redirect if not already on login/register to avoid loops
       if (!window.location.pathname.includes("/login") && !window.location.pathname.includes("/register")) {
         window.location.href = "/login";
       }
