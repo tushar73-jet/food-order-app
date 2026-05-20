@@ -12,10 +12,11 @@ import {
   CardRoot,
   CardHeader,
   CardBody,
-  Button
+  Button,
+  Input
 } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
-import { fetchAllAdminOrders, updateOrderStatus } from "../services/api";
+import { useEffect, useState, useRef } from "react";
+import { fetchAllAdminOrders, updateOrderStatus, dispatchOrder } from "../services/api";
 import { Link } from "react-router-dom";
 
 const STATUSES = ["PENDING", "PREPARING", "OUT_FOR_DELIVERY", "DELIVERED"];
@@ -31,14 +32,28 @@ const statusColors = {
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const prevPending = useRef(0);
 
   useEffect(() => {
     loadOrders();
+    
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
     
     // Auto-refresh every 10 seconds to catch new orders
     const interval = setInterval(loadOrders, 10000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    const currentPending = orders.filter(o => o.status === 'PENDING').length;
+    if (currentPending > prevPending.current && 'Notification' in window && Notification.permission === 'granted') {
+      new Notification('New Order Received!', { body: `You have ${currentPending} pending orders.` });
+    }
+    prevPending.current = currentPending;
+  }, [orders]);
 
   const loadOrders = async () => {
     try {
@@ -68,9 +83,35 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const handleDispatch = async (orderId) => {
+    setOrders((prev) => prev.map(o => o.id === orderId ? { ...o, status: 'OUT_FOR_DELIVERY' } : o));
+    try {
+      await dispatchOrder(orderId);
+    } catch (err) {
+      loadOrders(); // revert
+      if (err.response?.status === 503) {
+        alert("No riders available!");
+      } else {
+        console.error("Failed to dispatch order", err);
+      }
+    }
+  };
+
+  const exportCSV = () => {
+    const headers = "ID,Customer,Status,Amount,Date\n";
+    const csv = headers + orders.map(o => `${o.id},"${o.user?.name || 'Unknown'}",${o.status},${o.totalPrice},"${new Date(o.createdAt).toLocaleString()}"`).join("\n");
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `orders_${new Date().toISOString()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const getNextActionLabel = (status) => {
     if (status === "PENDING") return "Accept & Cook";
-    if (status === "PREPARING") return "Dispatch Rider";
+    if (status === "PREPARING") return "🚀 Auto-Dispatch Rider";
     if (status === "OUT_FOR_DELIVERY") return "Mark Delivered";
     return null;
   };
@@ -83,34 +124,100 @@ export default function AdminOrdersPage() {
     );
   }
 
+  // Filter orders by search term
+  const filteredOrders = orders.filter(o => 
+    o.id.toString().includes(searchTerm) || 
+    (o.user?.name && o.user.name.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
   // Group orders by status
   const groupedOrders = STATUSES.map(status => ({
     status,
-    items: orders.filter(o => o.status === status)
+    items: filteredOrders.filter(o => o.status === status)
   }));
+
+  // Calculate Stats
+  const today = new Date().toDateString();
+  const todayOrders = orders.filter(o => new Date(o.createdAt).toDateString() === today);
+  const stats = {
+    revenue: todayOrders.filter(o => o.status === 'DELIVERED').reduce((s, o) => s + Number(o.totalPrice), 0).toFixed(0),
+    pending: orders.filter(o => o.status === 'PENDING').length,
+    active: orders.filter(o => o.status === 'OUT_FOR_DELIVERY').length,
+    total: todayOrders.length
+  };
 
   return (
     <Box bg="#f4f6f8" minH="100vh">
         <Box bg="#1a202c" py={6} px={8} color="white" mb={8} boxShadow="md">
             <Container maxW="container.xl">
-                <HStack justify="space-between" align="center">
+                <HStack justify="space-between" align="center" wrap="wrap" gap={4}>
                     <VStack align="flex-start" spacing={1}>
                         <Heading size="xl" fontWeight="900">Restaurant Admin</Heading>
                         <Text color="gray.400" fontWeight="600">Manage live orders and dispatch riders.</Text>
                     </VStack>
-                    <Badge colorScheme="green" variant="solid" px={4} py={2} borderRadius="xl" fontSize="sm">
-                        🟢 {orders.filter(o => o.status !== "DELIVERED" && o.status !== "CANCELLED").length} Active
-                    </Badge>
-                    <Link to="/admin/users">
-                        <Button colorScheme="whiteAlpha" variant="solid" px={6} borderRadius="xl">
-                            Manage Riders 🏍️
+                    <HStack gap={3} wrap="wrap">
+                        <Input 
+                          placeholder="Search orders..." 
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          w={{ base: "full", md: "160px" }}
+                          bg="white"
+                          color="black"
+                          borderRadius="md"
+                          size="sm"
+                        />
+                        <Button onClick={exportCSV} colorScheme="whiteAlpha" variant="outline" size="sm" borderRadius="md">
+                          Export CSV
                         </Button>
-                    </Link>
+                        <Link to="/admin/analytics">
+                            <Button colorScheme="whiteAlpha" variant="outline" size="sm" borderRadius="md">
+                                📊 Analytics
+                            </Button>
+                        </Link>
+                        <Link to="/admin/menu">
+                            <Button colorScheme="whiteAlpha" variant="outline" size="sm" borderRadius="md">
+                                🍽️ Menu
+                            </Button>
+                        </Link>
+                        <Link to="/admin/users">
+                            <Button colorScheme="whiteAlpha" variant="solid" size="sm" borderRadius="md" bg="green.500" _hover={{ bg: "green.600" }}>
+                                Manage Riders 🏍️
+                            </Button>
+                        </Link>
+                    </HStack>
                 </HStack>
             </Container>
         </Box>
 
         <Container maxW="container.xl" pb={12}>
+            {/* Stats Bar */}
+            <SimpleGrid columns={{ base: 2, md: 4 }} gap={4} mb={6}>
+                <CardRoot borderRadius="xl" border="1px solid" borderColor="gray.100" boxShadow="sm" bg="white">
+                    <CardBody p={4} textAlign="center">
+                        <Text fontSize="sm" color="gray.500" fontWeight="700">Today's Revenue</Text>
+                        <Heading size="md" color="green.500" mt={1}>₹{stats.revenue}</Heading>
+                    </CardBody>
+                </CardRoot>
+                <CardRoot borderRadius="xl" border="1px solid" borderColor="gray.100" boxShadow="sm" bg="white">
+                    <CardBody p={4} textAlign="center">
+                        <Text fontSize="sm" color="gray.500" fontWeight="700">Pending Orders</Text>
+                        <Heading size="md" color="orange.500" mt={1}>{stats.pending}</Heading>
+                    </CardBody>
+                </CardRoot>
+                <CardRoot borderRadius="xl" border="1px solid" borderColor="gray.100" boxShadow="sm" bg="white">
+                    <CardBody p={4} textAlign="center">
+                        <Text fontSize="sm" color="gray.500" fontWeight="700">Active Deliveries</Text>
+                        <Heading size="md" color="purple.500" mt={1}>{stats.active}</Heading>
+                    </CardBody>
+                </CardRoot>
+                <CardRoot borderRadius="xl" border="1px solid" borderColor="gray.100" boxShadow="sm" bg="white">
+                    <CardBody p={4} textAlign="center">
+                        <Text fontSize="sm" color="gray.500" fontWeight="700">Total Orders</Text>
+                        <Heading size="md" color="blue.500" mt={1}>{stats.total}</Heading>
+                    </CardBody>
+                </CardRoot>
+            </SimpleGrid>
+
             {/* Kanban Board Layout */}
             <SimpleGrid columns={{ base: 1, lg: 4 }} spacing={6} align="start">
                 {groupedOrders.map(group => (
@@ -173,7 +280,13 @@ export default function AdminOrdersPage() {
                                                             px={3}
                                                             fontWeight="800"
                                                             _hover={{ bg: "#c53030" }}
-                                                            onClick={() => handleUpdateStatus(order.id, order.status)}
+                                                            onClick={() => {
+                                                                if (order.status === "PREPARING") {
+                                                                    handleDispatch(order.id);
+                                                                } else {
+                                                                    handleUpdateStatus(order.id, order.status);
+                                                                }
+                                                            }}
                                                         >
                                                             {getNextActionLabel(order.status)}
                                                         </Button>

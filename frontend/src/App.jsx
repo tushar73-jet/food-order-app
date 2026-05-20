@@ -9,6 +9,8 @@ import OrderTrackingPage from "./pages/OrderTrackingPage";
 import MyOrdersPage from "./pages/MyOrdersPage";
 import AdminOrdersPage from "./pages/AdminOrdersPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
+import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
+import AdminMenuPage from "./pages/AdminMenuPage";
 import { useAuth } from "./context/AuthContext";
 
 const AdminRoute = ({ children }) => {
@@ -39,6 +41,16 @@ function App() {
         <Route path="/admin/users" element={
           <AdminRoute>
             <AdminUsersPage />
+          </AdminRoute>
+        } />
+        <Route path="/admin/analytics" element={
+          <AdminRoute>
+            <AdminAnalyticsPage />
+          </AdminRoute>
+        } />
+        <Route path="/admin/menu" element={
+          <AdminRoute>
+            <AdminMenuPage />
           </AdminRoute>
         } />
       </Routes>
