@@ -10,8 +10,11 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev --name init",
     "seed": "node seed.js",
-    "build": "prisma generate && prisma db push",
-    "postinstall": "prisma generate"
+    "build": "prisma generate && prisma migrate deploy",
+    "postinstall": "prisma generate",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [],
   "author": "",
@@ -31,7 +34,10 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.6",
     "nodemon": "^3.1.11",
-    "prisma": "^5.22.0"
+    "prisma": "^5.22.0",
+    "supertest": "^7.2.2",
+    "vitest": "^4.1.6"
   }
 }
