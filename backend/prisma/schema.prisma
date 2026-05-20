@@ -48,6 +48,8 @@ model CartItem {
   quantity  Int
   cart      Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
   product   Product @relation(fields: [productId], references: [id])
+
+  @@index([cartId])
 }
 
 model Restaurant {
@@ -75,7 +77,6 @@ model Product {
   orderItems   OrderItem[]
   restaurant   Restaurant  @relation(fields: [restaurantId], references: [id])
 }
-
 model Order {
   id              Int         @id @default(autoincrement())
   userId          Int
@@ -89,6 +90,10 @@ model Order {
   updatedAt       DateTime    @updatedAt
   user            User        @relation(fields: [userId], references: [id])
   items           OrderItem[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model OrderItem {

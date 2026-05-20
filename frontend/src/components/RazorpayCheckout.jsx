@@ -1,6 +1,9 @@
 import { useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
 
 export default function RazorpayCheckout({ orderId, amount, currency, keyId, onSuccess, onError }) {
+  const { user } = useAuth();
+
   useEffect(() => {
     const loadRazorpayScript = () => {
       return new Promise((resolve) => {
@@ -21,10 +24,6 @@ export default function RazorpayCheckout({ orderId, amount, currency, keyId, onS
     const openRazorpay = async () => {
       try {
         await loadRazorpayScript();
-
-        // Prefill from local user data if available
-        const userString = localStorage.getItem("user");
-        const user = userString ? JSON.parse(userString) : {};
 
         const options = {
           key: keyId,
@@ -64,7 +63,7 @@ export default function RazorpayCheckout({ orderId, amount, currency, keyId, onS
     if (orderId && keyId) {
       openRazorpay();
     }
-  }, [orderId, amount, currency, keyId, onSuccess, onError]);
+  }, [orderId, amount, currency, keyId, onSuccess, onError, user]);
 
   return null;
 }

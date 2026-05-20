@@ -1,5 +1,6 @@
 import { createContext, useState, useContext, useEffect } from "react";
 import { fetchCart, syncCart, clearCartApi } from "../services/api";
+import { useAuth } from "./AuthContext";
 
 const CartContext = createContext();
 
@@ -10,7 +11,7 @@ export const CartProvider = ({ children }) => {
     const storedCart = localStorage.getItem("cart");
     return storedCart ? JSON.parse(storedCart) : [];
   });
-  const token = localStorage.getItem("token");
+  const { token } = useAuth();
 
   // Fetch cart from backend on mount if logged in
   useEffect(() => {

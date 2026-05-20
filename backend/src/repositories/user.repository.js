@@ -43,8 +43,10 @@ export const userRepository = {
     });
   },
 
-  findAll: async () => {
+  findAll: async (skip, take) => {
     return prisma.user.findMany({
+      skip,
+      take,
       select: {
         id: true,
         email: true,

@@ -20,7 +20,8 @@ export const orderController = {
   },
 
   getMyOrders: async (req, res) => {
-    const orders = await orderService.getUserOrders(req.userId);
+    const { page, limit } = req.query;
+    const orders = await orderService.getUserOrders(req.userId, page, limit);
     res.json(orders);
   },
 
@@ -30,7 +31,8 @@ export const orderController = {
   },
 
   getAllAdminOrders: async (req, res) => {
-    const orders = await orderService.getAllAdminOrders();
+    const { page, limit } = req.query;
+    const orders = await orderService.getAllAdminOrders(page, limit);
     res.json(orders);
   },
 

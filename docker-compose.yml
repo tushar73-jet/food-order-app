@@ -1,0 +1,24 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: foodstore_backend
+    env_file:
+      - ./backend/.env
+    environment:
+      NODE_ENV: production
+      CORS_ORIGINS: http://localhost:80
+      ALLOW_DEMO_PAYMENTS: "false"
+    ports:
+      - "3002:3001"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: foodstore_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend

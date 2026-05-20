@@ -1,6 +1,7 @@
 import { orderRepository } from "../repositories/order.repository.js";
 import { paymentService } from "./payment.service.js";
 import { AppError } from "../utils/AppError.js";
+import { sendOrderPlacedEmail, sendOrderStatusEmail } from "../lib/mailer.js";
 
 export const orderService = {
   calculateTotal: async (items) => {
@@ -23,7 +24,7 @@ export const orderService = {
 
     await paymentService.verifyPaymentSignature(razorpay_order_id, razorpay_payment_id, razorpay_signature);
 
-    return orderRepository.createOrderWithItems({
+    const newOrder = await orderRepository.createOrderWithItems({
       userId,
       paymentId: razorpay_payment_id,
       paymentStatus: "PAID",
@@ -31,18 +32,27 @@ export const orderService = {
       contactNumber,
       items
     });
+
+    const fullOrder = await orderRepository.findById(newOrder.id);
+    if (fullOrder && fullOrder.user) {
+      await sendOrderPlacedEmail(fullOrder.user.email, newOrder.id);
+    }
+
+    return newOrder;
   },
 
-  getUserOrders: async (userId) => {
-    return orderRepository.findByUserId(userId);
+  getUserOrders: async (userId, page = 1, limit = 20) => {
+    const skip = (page - 1) * limit;
+    return orderRepository.findByUserId(userId, skip, Number(limit));
   },
 
   getRiderActiveOrders: async () => {
     return orderRepository.findActiveForRider();
   },
 
-  getAllAdminOrders: async () => {
-    return orderRepository.findAllAdmin();
+  getAllAdminOrders: async (page = 1, limit = 20) => {
+    const skip = (page - 1) * limit;
+    return orderRepository.findAllAdmin(skip, Number(limit));
   },
 
   getOrderById: async (id) => {
@@ -57,6 +67,13 @@ export const orderService = {
     if (!status) {
       throw new AppError("Status is required", 400);
     }
-    return orderRepository.updateStatus(id, status);
+    const updated = await orderRepository.updateStatus(id, status);
+    
+    const fullOrder = await orderRepository.findById(id);
+    if (fullOrder && fullOrder.user) {
+      await sendOrderStatusEmail(fullOrder.user.email, id, status);
+    }
+    
+    return updated;
   }
 };

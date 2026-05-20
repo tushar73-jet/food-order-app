@@ -41,6 +41,9 @@ export const paymentService = {
     }
 
     if (paymentId === "MOBILE_TEST_PAYMENT" && signature === "MOBILE_TEST_SIG") {
+      if (env.NODE_ENV === "production") {
+        throw new AppError("Demo payments are strictly disabled in production.", 403);
+      }
       if (!env.ALLOW_DEMO_PAYMENTS) {
         throw new AppError("Demo payments are disabled in this environment.", 403);
       }

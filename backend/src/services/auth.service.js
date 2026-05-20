@@ -141,8 +141,9 @@ export const authService = {
     return { message: "Password has been successfully restored." };
   },
 
-  getAllUsers: async () => {
-    return userRepository.findAll();
+  getAllUsers: async (page = 1, limit = 20) => {
+    const skip = (page - 1) * limit;
+    return userRepository.findAll(skip, Number(limit));
   },
 
   updateUserRole: async (id, role) => {

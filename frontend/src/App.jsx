@@ -9,9 +9,10 @@ import OrderTrackingPage from "./pages/OrderTrackingPage";
 import MyOrdersPage from "./pages/MyOrdersPage";
 import AdminOrdersPage from "./pages/AdminOrdersPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
+import { useAuth } from "./context/AuthContext";
 
 const AdminRoute = ({ children }) => {
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const { user } = useAuth();
   if (!user || user.role !== "ADMIN") {
     return <Navigate to="/" replace />;
   }

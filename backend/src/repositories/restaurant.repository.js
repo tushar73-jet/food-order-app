@@ -1,8 +1,10 @@
 import prisma from "../lib/prisma.js";
 
 export const restaurantRepository = {
-  findAll: async () => {
+  findAll: async (skip, take) => {
     return prisma.restaurant.findMany({
+      skip,
+      take,
       include: {
         products: {
           take: 1,

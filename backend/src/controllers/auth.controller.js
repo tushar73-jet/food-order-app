@@ -31,7 +31,8 @@ export const authController = {
   },
 
   getAllUsers: async (req, res) => {
-    const users = await authService.getAllUsers();
+    const { page, limit } = req.query;
+    const users = await authService.getAllUsers(page, limit);
     res.json(users);
   },
 

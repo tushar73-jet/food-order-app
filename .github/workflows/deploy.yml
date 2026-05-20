@@ -1,0 +1,36 @@
+name: FoodStore Production CD
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy-backend:
+    name: Deploy Backend
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Backend Dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        working-directory: backend
+
+      # Example deploy step: here you'd integrate Render/Railway CLI deployment
+      # We provide a placeholder to document production-ready release pipeline
+      - name: Deploy Placeholder
+        run: |
+          echo "Simulating production deployment to Railway/Render..."
+          echo "Running Prisma migrations in production..."
+          echo "Deployment successful!"

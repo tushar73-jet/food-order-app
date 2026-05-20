@@ -40,9 +40,11 @@ export const orderRepository = {
     });
   },
 
-  findByUserId: async (userId) => {
+  findByUserId: async (userId, skip, take) => {
     return prisma.order.findMany({
       where: { userId },
+      skip,
+      take,
       include: {
         items: {
           include: {
@@ -77,8 +79,10 @@ export const orderRepository = {
     });
   },
 
-  findAllAdmin: async () => {
+  findAllAdmin: async (skip, take) => {
     return prisma.order.findMany({
+      skip,
+      take,
       include: {
         user: true,
         items: {

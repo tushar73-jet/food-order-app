@@ -12,9 +12,50 @@ import cartRoutes from "./routes/cartRoutes.js";
 import jwt from "jsonwebtoken";
 import prisma from "./lib/prisma.js";
 import { env } from "./config/env.js";
+import { logger } from "./lib/logger.js";
+import { v4 as uuidv4 } from "uuid";
+import client from "prom-client";
 
 const app = express();
 const PORT = env.PORT || 3001;
+
+const collectDefaultMetrics = client.collectDefaultMetrics;
+collectDefaultMetrics();
+
+const httpRequestDurationMicroseconds = new client.Histogram({
+  name: 'http_request_duration_ms',
+  help: 'Duration of HTTP requests in ms',
+  labelNames: ['method', 'route', 'code'],
+  buckets: [50, 100, 200, 300, 400, 500, 1000]
+});
+
+app.use((req, res, next) => {
+  req.id = req.headers['x-request-id'] || uuidv4();
+  res.setHeader('X-Request-ID', req.id);
+  
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    httpRequestDurationMicroseconds
+      .labels(req.method, req.route ? req.route.path : req.path, res.statusCode)
+      .observe(duration);
+      
+    logger.info(`${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`, {
+      requestId: req.id,
+      method: req.method,
+      url: req.originalUrl,
+      status: res.statusCode,
+      duration
+    });
+  });
+  
+  next();
+});
+
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', client.register.contentType);
+  res.end(await client.register.metrics());
+});
 
 // Root route for health check
 app.get("/", (req, res) => {
@@ -27,15 +68,16 @@ app.get("/api/health", async (req, res) => {
   try {
     // Check connection AND schema readiness (findMany forces column check)
     await prisma.user.findMany({ take: 1 });
-    const userCount = await prisma.user.count();
-    dbStatus = `Connected (Found ${userCount} users, Schema Sync Verified)`;
+    dbStatus = "connected";
   } catch (error) {
-    dbStatus = `Connection Error: ${error.message}`;
-    console.error("Health Check DB Error:", error);
+    dbStatus = "error";
+    logger.error("Health Check DB Error:", { error: error.message });
   }
 
   res.json({
     status: "healthy",
+    version: "1.0.0",
+    uptime: process.uptime(),
     database: dbStatus,
     timestamp: new Date().toISOString(),
     env: env.NODE_ENV,
@@ -49,13 +91,13 @@ app.get("/api", (req, res) => {
 
 // Startup Security Checks
 if (!env.RAZORPAY_WEBHOOK_SECRET) {
-  console.warn("⚠️  WARNING: RAZORPAY_WEBHOOK_SECRET is not configured. Webhooks will fail validation.");
+  logger.warn("RAZORPAY_WEBHOOK_SECRET is not configured. Webhooks will fail validation.");
 }
 if (env.ALLOW_DEMO_PAYMENTS) {
-  console.info("🚀 INFO: ALLOW_DEMO_PAYMENTS is enabled. Mobile testing mode is ACTIVE.");
+  logger.info("ALLOW_DEMO_PAYMENTS is enabled. Mobile testing mode is ACTIVE.");
 }
 if (env.NODE_ENV === "production" && !env.CORS_ORIGINS) {
-  console.warn("⚠️  WARNING: CORS_ORIGINS is not set in production. Browser requests will be BLOCKED.");
+  logger.warn("CORS_ORIGINS is not set in production. Browser requests will be BLOCKED.");
 }
 
 
@@ -77,7 +119,7 @@ const corsOptions = {
 
     if (allowedOrigins.includes(origin)) return callback(null, true);
 
-    console.error(`❌ CORS blocked origin: ${origin}`);
+    logger.error(`CORS blocked origin: ${origin}`);
     return callback(new Error("CORS: Origin not allowed"), false);
   },
   credentials: true,
@@ -88,7 +130,6 @@ app.use(cors(corsOptions));
 
 app.set("trust proxy", 1);
 app.use(helmet());
-app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev"));
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -170,10 +211,15 @@ app.use((req, res) => {
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   const status = err?.statusCode || 500;
-  if (env.NODE_ENV !== "production") {
-    console.error(err);
+  if (status === 500) {
+    logger.error("Unhandled Exception:", { error: err.message, stack: err.stack, requestId: req.id });
+  } else {
+    logger.warn("App Error:", { error: err.message, status, requestId: req.id });
   }
-  res.status(status).json({ error: status === 500 ? "Internal server error" : err.message });
+  res.status(status).json({ 
+    error: status === 500 ? "Internal server error" : err.message,
+    requestId: req.id
+  });
 });
 
 server.listen(PORT);

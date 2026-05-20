@@ -35,6 +35,9 @@ export const env = (() => {
   if (value.NODE_ENV === "production" && !value.CORS_ORIGINS) {
     throw new Error("Invalid environment variables:\nCORS_ORIGINS: CORS_ORIGINS is required in production.");
   }
+  if (value.NODE_ENV === "production" && value.ALLOW_DEMO_PAYMENTS) {
+    throw new Error("Invalid environment variables:\nALLOW_DEMO_PAYMENTS: Cannot enable demo payments in production.");
+  }
   return value;
 })();
 

@@ -12,19 +12,17 @@ import {
 } from "@chakra-ui/react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 
 const Header = () => {
   const { cartItems, clearLocalCart } = useCart();
+  const { user, token, logout } = useAuth();
   const navigate = useNavigate();
-  const userString = localStorage.getItem("user");
-  const user = userString ? JSON.parse(userString) : null;
-  const token = localStorage.getItem("token");
 
   const cartItemCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    logout();
     clearLocalCart();
     navigate("/login");
   };

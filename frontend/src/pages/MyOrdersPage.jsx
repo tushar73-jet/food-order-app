@@ -20,6 +20,7 @@ import {
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { fetchMyOrders } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 const statusConfig = {
   PENDING: { color: "#ff9800", bg: "#fffaf0" },
@@ -34,9 +35,9 @@ export default function MyOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
   const navigate = useNavigate();
+  const { token } = useAuth();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
     if (!token) {
       navigate("/login");
       return;
