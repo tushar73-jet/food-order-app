@@ -171,7 +171,14 @@ io.use((socket, next) => {
   }
 });
 
+export const connectedRiders = new Map();
+
 io.on("connection", (socket) => {
+  if (socket.user?.role === 'RIDER') {
+    connectedRiders.set(socket.user.id, socket.id);
+    socket.on("disconnect", () => connectedRiders.delete(socket.user.id));
+  }
+
   socket.on("join_order_room", async (orderId) => {
     const id = Number(orderId);
     if (!Number.isFinite(id)) return;

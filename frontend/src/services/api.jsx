@@ -22,7 +22,6 @@ API.interceptors.response.use(
 
       if (refreshToken && !originalRequest.url.includes('/auth/refresh')) {
         try {
-          // Use base axios to avoid interceptor loop
           const res = await axios.post(`${API.defaults.baseURL}/auth/refresh`, { refreshToken });
           if (res.data.token) {
             localStorage.setItem("token", res.data.token);
@@ -67,4 +66,12 @@ export const verifyPayment = (paymentData) => API.post("/orders/verify-payment",
 export const fetchCart = () => API.get("/cart");
 export const syncCart = (items) => API.post("/cart", { items });
 export const clearCartApi = () => API.delete("/cart");
+
+// Admin / Rider / Analytics
+export const dispatchOrder = (id) => API.post(`/orders/${id}/dispatch`);
+export const fetchAnalytics = () => API.get('/orders/admin/analytics');
+export const fetchAllRestaurantsAdmin = () => API.get('/restaurants/admin/list');
+export const createProduct = (data) => API.post('/restaurants/admin/products', data);
+export const updateProduct = (id, data) => API.put(`/restaurants/admin/products/${id}`, data);
+export const deleteProduct = (id) => API.delete(`/restaurants/admin/products/${id}`);
 

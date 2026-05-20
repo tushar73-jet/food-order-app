@@ -57,6 +57,8 @@ router.post(
 router.get("/my-orders", protect, asyncHandler(orderController.getMyOrders));
 router.get("/rider/active", protect, rider, asyncHandler(orderController.getRiderActiveOrders));
 router.get("/admin/all", protect, admin, asyncHandler(orderController.getAllAdminOrders));
+router.get("/admin/analytics", protect, admin, asyncHandler(orderController.getAnalytics));
+router.post("/:id/dispatch", protect, admin, asyncHandler(orderController.dispatchOrder));
 router.get("/:id", protect, asyncHandler(orderController.getOrderById));
 const UpdateStatusSchema = z.object({
   body: z.object({
