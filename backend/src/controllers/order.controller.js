@@ -51,5 +51,39 @@ export const orderController = {
     req.io.to(`order_${id}`).emit("order_status_updated", { status });
     
     res.json(updatedOrder);
+  },
+
+  getAnalytics: async (req, res) => {
+    const analytics = await orderService.getAnalytics();
+    res.json(analytics);
+  },
+
+  dispatchOrder: async (req, res) => {
+    const { id } = req.params;
+    const { order, rider } = await orderService.dispatchToRider(id);
+    
+    // Emit to rider via socket if connected
+    const { connectedRiders } = await import('../index.js');
+    const riderSocketId = connectedRiders.get(rider.id);
+    if (riderSocketId && req.io) {
+      req.io.to(riderSocketId).emit("new_delivery_assigned", {
+        orderId: order.id,
+        customerName: order.user?.name,
+        address: order.deliveryAddress,
+        contactNumber: order.contactNumber,
+        items: order.items,
+        estimatedPickup: new Date().toISOString()
+      });
+    }
+    
+    // Also notify customer
+    if (req.io) {
+      req.io.to(`order_${id}`).emit("order_status_updated", { 
+        status: 'OUT_FOR_DELIVERY',
+        riderName: rider.name 
+      });
+    }
+    
+    res.json({ message: 'Rider dispatched', order, rider });
   }
 };
